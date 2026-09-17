@@ -1,0 +1,34 @@
+/* print.css — physical output. No fluid units inside pages; exact inches only. */
+
+/* The imposed print DOM is built on demand; keep it out of the way on screen. */
+#print-root{ display:none; }
+
+/* Injected at print time (see main.js) overrides @page size/orientation per mode. */
+@page{ size:8.5in 11in; margin:0; }
+
+@media print{
+  /* Chrome off, print layout on. */
+  #app, .no-print{ display:none !important; }
+  #print-root{ display:block !important; }
+
+  html,body{ margin:0 !important; padding:0 !important; background:#fff !important; }
+
+  /* Force exact color/ink reproduction. */
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+
+  /* Each sheet is one physical page. */
+  .print-sheet{ page-break-after:always; break-after:page; overflow:hidden; position:relative; }
+  .print-sheet:last-child{ page-break-after:auto; break-after:auto; }
+
+  /* Half-sheet booklet: two 5.5x8.5 pages side by side on landscape 8.5x11. */
+  .print-sheet.landscape{ width:11in; height:8.5in; display:flex; }
+  .print-slot{ width:5.5in; height:8.5in; overflow:hidden; }
+
+  /* Full-page mode: one 8.5x11 page per portrait sheet. */
+  .print-sheet.portrait{ width:8.5in; height:11in; }
+
+  /* Pages themselves: strip the on-screen shadow, keep exact geometry. */
+  .print-page.page, .page{ box-shadow:none !important; break-inside:avoid; }
+  .pg-half{ width:5.5in; height:8.5in; }
+  .pg-full{ width:8.5in; height:11in; }
+}

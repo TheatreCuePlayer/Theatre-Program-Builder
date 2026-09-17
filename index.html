@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theatre Program Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+  <!-- ================= APP CHROME (not printed) ================= -->
+  <div id="app" class="h-screen flex flex-col">
+
+    <!-- Top bar -->
+    <header class="no-print flex items-center gap-3 px-4 py-2 bg-white border-b border-slate-200 shadow-sm">
+      <h1 class="font-semibold text-slate-900 mr-2">Theatre&nbsp;Program&nbsp;Builder</h1>
+
+      <!-- Size toggle -->
+      <div class="seg" role="group" aria-label="Page size">
+        <button id="size-half" class="seg-btn is-active">5.5 × 8.5 Half-Sheet</button>
+        <button id="size-full" class="seg-btn">8.5 × 11 Full Page</button>
+      </div>
+
+      <!-- Layout mode toggle -->
+      <div class="seg" role="group" aria-label="Layout mode">
+        <button id="mode-auto" class="seg-btn is-active">Auto</button>
+        <button id="mode-manual" class="seg-btn">Assembly Board</button>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <button id="btn-import" class="btn btn-ghost">Import JSON</button>
+      <button id="btn-export" class="btn btn-ghost">Export JSON</button>
+      <button id="btn-print" class="btn btn-primary">Print / PDF</button>
+      <input id="file-input" type="file" accept="application/json" class="hidden">
+    </header>
+
+    <!-- Body: sidebar + workspace -->
+    <div class="flex-1 flex min-h-0">
+      <aside id="sidebar" class="no-print w-[360px] shrink-0 overflow-y-auto bg-white border-r border-slate-200 p-4">
+        <!-- form injected by main.js -->
+      </aside>
+
+      <main class="flex-1 min-w-0 overflow-auto">
+        <!-- Auto/preview mode -->
+        <div id="preview-wrap" class="p-8 flex flex-col items-center gap-6">
+          <div id="stage" class="stage"></div>
+        </div>
+
+        <!-- Manual assembly board -->
+        <div id="board" class="p-6 hidden"></div>
+      </main>
+
+      <!-- Modular cards rail (independent section cards w/ export buttons) -->
+      <aside id="cards-rail" class="no-print w-[300px] shrink-0 overflow-y-auto bg-white border-l border-slate-200 p-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Section Cards</h2>
+        <div id="cards-list" class="flex flex-col gap-4"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Hidden host for the imposed print layout -->
+  <div id="print-root" aria-hidden="true"></div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
