@@ -26,9 +26,13 @@ const escAttr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace
 
 // Collapsible sidebar groups. Open/closed state persists across form rebuilds (add/remove
 // rows re-renders the whole form) so a section you collapsed stays collapsed.
-const grpState = {}; // id -> open?  (absent = open by default)
+const grpState = {}; // id -> open?  (set once the user toggles a section)
+const DEFAULT_OPEN = new Set(['typography', 'showinfo']); // rest start collapsed
+function grpIsOpen(id) {
+  return id in grpState ? grpState[id] : DEFAULT_OPEN.has(id);
+}
 function detailsGroup(id, title, bodyHTML, headExtra = '') {
-  const open = grpState[id] === false ? '' : 'open';
+  const open = grpIsOpen(id) ? 'open' : '';
   return `<details class="grp" data-grp="${id}" ${open}>
     <summary class="grp-head"><span class="grp-title">${title}</span>${headExtra}</summary>
     <div class="grp-body">${bodyHTML}</div>
