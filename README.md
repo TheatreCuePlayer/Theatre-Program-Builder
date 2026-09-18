@@ -4,10 +4,13 @@ A single-page web app for building printable theatre programs (playbills). Enter
 show info, cast, crew, musical numbers, and bios; preview the pages live; and print a
 real fold-and-staple booklet.
 
+**Live app:** <https://theatrecueplayer.github.io/Theatre-Program-Builder/>
+
 ## Run it
 
-ES modules need to be served over HTTP (opening `index.html` directly via `file://`
-won't load the JS). From this folder:
+The hosted link above needs no setup. To run it locally, note that ES modules must be
+served over HTTP (opening `index.html` directly via `file://` won't load the JS). From
+this folder:
 
 ```bash
 python -m http.server 8770
@@ -67,3 +70,8 @@ Then open <http://localhost:8770/index.html>.
   Printing is unaffected. Host photos on a CORS-enabled URL if you need that card exported.
 - **QR codes** are generated with `qrcode-generator` (CDN).
 - **Copy PNG** uses the async clipboard when available and falls back to a file download.
+
+## License
+
+[MIT](LICENSE) © Kevin Blinn. The three bundled dependencies (Tailwind, html-to-image,
+qrcode-generator) are all MIT-licensed CDN scripts.
