@@ -73,5 +73,5 @@ Then open <http://localhost:8770/index.html>.
 
 ## License
 
-[MIT](LICENSE) © Kevin Blinn. The three bundled dependencies (Tailwind, html-to-image,
-qrcode-generator) are all MIT-licensed CDN scripts.
+[MIT](LICENSE) © Theatre Cue Player. The three bundled dependencies (Tailwind,
+html-to-image, qrcode-generator) are all MIT-licensed CDN scripts.

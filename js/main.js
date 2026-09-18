@@ -222,6 +222,14 @@ $('#size-full').onclick = () => setSize('full');
 $('#mode-auto').onclick = () => setMode('auto');
 $('#mode-manual').onclick = () => setMode('manual');
 
+$('#btn-new').onclick = () => {
+  // Destructive: replaces the current program with a blank one. Confirm first.
+  if (!confirm('Start a new show? This clears the current program. Export JSON first if you want to keep it.')) return;
+  State.reset();
+  renderForm(); syncToolbar();
+  toast('New blank show');
+};
+
 $('#btn-export').onclick = () => State.exportJSON();
 $('#btn-import').onclick = () => $('#file-input').click();
 $('#file-input').onchange = (e) => {
