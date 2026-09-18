@@ -1,0 +1,55 @@
+{
+  "schema": 2,
+  "meta": {
+    "title": "The Fantasticks",
+    "subtitle": "Riverside Players",
+    "book": "Tom Jones",
+    "music": "Harvey Schmidt",
+    "lyrics": "Tom Jones",
+    "director": "Jane Doe",
+    "producer": "John Smith",
+    "venue": "Riverside Theatre",
+    "dates": "June 6–21, 2026",
+    "licensing": "Produced by special arrangement with MTI."
+  },
+  "cast": [
+    { "character": "The Girl (Luisa)", "performer": "Emma Stone" },
+    { "character": "The Boy (Matt)", "performer": "Liam Carter" },
+    { "character": "El Gallo", "performer": "Marcus Webb" }
+  ],
+  "creative": [
+    { "role": "Director", "name": "Jane Doe" },
+    { "role": "Music Director", "name": "Alan Reed" },
+    { "role": "Choreographer", "name": "Mia Lopez" }
+  ],
+  "management": [
+    { "role": "Producer", "name": "John Smith" },
+    { "role": "Company Manager", "name": "Dana Fox" }
+  ],
+  "crew": [
+    { "category": "Scenery Construction", "names": "Sam\nAlex\nJordan\nCasey\nPat\nLee" },
+    { "category": "Lighting Crew", "names": "Chris, Robin, Drew" }
+  ],
+  "songs": [
+    { "act": "Act I", "title": "Try to Remember", "note": "El Gallo" },
+    { "act": "Act I", "title": "Much More", "note": "Luisa" },
+    { "act": "Act II", "title": "They Were You", "note": "Matt & Luisa" }
+  ],
+  "whoswho": [
+    { "name": "Emma Stone", "credit": "The Girl (Luisa)", "photo": "", "bio": "Emma is thrilled to return to the Riverside stage. Previous credits include Into the Woods and Once." },
+    { "name": "Liam Carter", "credit": "The Boy (Matt)", "photo": "", "bio": "Liam last appeared as Jack in Newsies. He thanks his family for their support." }
+  ],
+  "qr": [
+    { "label": "Donate", "url": "https://example.com/donate", "caption": "Support our season" },
+    { "label": "Season Tickets", "url": "https://example.com/tickets", "caption": "2026–27 on sale now" }
+  ],
+  "directorNote": {
+    "by": "Jane Doe",
+    "text": "Welcome to our production of The Fantasticks. This timeless story reminds us that we must sometimes suffer to grow. Thank you for supporting live theatre."
+  },
+  "productionNotes": "The Fantasticks runs approximately 2 hours with one 15-minute intermission.",
+  "acknowledgments": "Special thanks to our volunteers and sponsors.",
+  "backPage": "Next up: Little Shop of Horrors — October 2026.",
+  "options": { "size": "half", "layoutMode": "auto" },
+  "manual": null
+}

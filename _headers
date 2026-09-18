@@ -1,0 +1,6 @@
+# Cloudflare Pages headers (https://developers.cloudflare.com/pages/configuration/headers/)
+# Belt-and-suspenders alongside Cloudflare Access: keep this out of search engines.
+/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer

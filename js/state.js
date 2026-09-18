@@ -94,6 +94,20 @@ const State = {
   },
 
   reset() { this.doc = blankDoc(); this.emit(); },
+
+  // Load a show JSON hosted on THIS site (e.g. ?show=shows/fantasticks.json).
+  // Restricted to same-origin relative paths so the app can't be pointed at a
+  // foreign URL's JSON via a crafted link.
+  async loadURL(path) {
+    if (typeof path !== 'string' || /^[a-z]+:/i.test(path) || path.startsWith('//')) {
+      throw new Error('only same-origin relative paths are allowed');
+    }
+    const res = await fetch(path, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    this.doc = migrate(await res.json());
+    this.emit();
+    return this.doc;
+  },
 };
 
 // Forward/backward-compatible loader. Fills missing fields and maps the v1 schema.

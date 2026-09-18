@@ -71,7 +71,7 @@ function renderForm() {
       { k: 'act', ph: 'Act / group' }, { k: 'title', ph: 'Song / scene title' }, { k: 'note', ph: 'Note (who sings)' }])}
     ${listBlock("Who's Who (photos + bios · everyone)", 'whoswho', d.whoswho, [
       { k: 'name', ph: 'Name' }, { k: 'credit', ph: 'Role / character' },
-      { k: 'photo', ph: 'Photo URL (https://…)' }, { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
+      { k: 'photo', ph: 'Photo URL or images/name.jpg' }, { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
       { reorder: true, stacked: true })}
     ${listBlock('Creative Team', 'creative', d.creative, [
       { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }])}
@@ -301,6 +301,14 @@ State.subscribe(() => { refreshPreview(); refreshCards(); });
 renderForm();
 syncToolbar();
 refreshAll();
+
+// Optional deep link: ?show=shows/xyz.json loads a program hosted on THIS site.
+const showParam = new URLSearchParams(location.search).get('show');
+if (showParam) {
+  State.loadURL(showParam)
+    .then(() => { renderForm(); syncToolbar(); refreshAll(); toast('Loaded hosted show'); })
+    .catch((e) => toast('Could not load show: ' + e.message));
+}
 
 // Pre-warm html-to-image's font/resource cache in the background so the FIRST
 // real export is fast instead of paying the one-time font-embed cost on click.
