@@ -9,6 +9,9 @@ function blankDoc() {
     meta: {
       title: 'Your Show Title',
       subtitle: '',
+      // Optional cover image (URL, images/… path, or uploaded data URL). When set it
+      // replaces the generated text cover.
+      coverImage: '',
       licensing: '',
       book: '',
       music: '',

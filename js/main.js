@@ -141,6 +141,8 @@ function renderForm() {
     ${field('meta.venue', 'Venue', m.venue)}
     ${field('meta.dates', 'Dates', m.dates)}
     ${field('meta.licensing', 'Licensing / credit line', m.licensing, 'textarea')}
+    <div class="grp-sub">Cover Image <span class="sub-note">optional — replaces the text cover</span></div>
+    ${imageField('meta.coverImage', m.coverImage, 'Cover image URL, images/…, or upload →')}
     <div class="grp-sub">Director's Note</div>
     ${field('directorNote.text', 'Note', d.directorNote.text, 'textarea')}
     ${field('directorNote.by', 'Signed by', d.directorNote.by)}`;
@@ -359,6 +361,7 @@ $('#sidebar').addEventListener('click', (e) => {
   const { add, del, move, i, dir, addcustom, delcustom, cmove } = btn.dataset;
   if (add) {
     State.doc[add].push(rowTemplate[add]());
+    grpState[add] = true; // expand so the new (blank) row is visible
     renderForm(); State.emit();
   } else if (del) {
     State.doc[del].splice(Number(i), 1);
@@ -371,6 +374,7 @@ $('#sidebar').addEventListener('click', (e) => {
     renderForm(); State.emit();
   } else if (addcustom) {
     State.doc.custom.push(newCustom(addcustom));
+    grpState.custom = true; // expand so the new (blank) card is visible
     renderForm(); State.emit();
   } else if (delcustom !== undefined) {
     const [removed] = State.doc.custom.splice(Number(delcustom), 1);
@@ -427,7 +431,12 @@ function refreshCards() {
     scale.style.transformOrigin = 'top left';
     scale.style.transform = `scale(${s})`;
     scale.style.width = (5.5 * 96 * s) + 'px';
-    scale.style.height = (card.el.offsetHeight * s) + 'px';
+    // Fit the wrapper to the card. Recompute after layout and after any images load,
+    // since a card's true height isn't known until its images have decoded.
+    const fit = () => { scale.style.height = (card.el.offsetHeight * s) + 'px'; };
+    fit();
+    requestAnimationFrame(fit);
+    card.el.querySelectorAll('img').forEach(im => { if (!im.complete) im.addEventListener('load', fit, { once: true }); });
 
     svgBtn.onclick = () => { toast('Rendering SVG…'); guardExport(async () => { await downloadSVG(card.el, card.title); toast('SVG downloaded'); }); };
     pngBtn.onclick = () => { toast('Rendering PNG (300 DPI)…'); guardExport(async () => {
@@ -547,6 +556,8 @@ function toast(msg) {
 // One shared, hidden file picker drives every "Upload"/"Replace" button. The button sets
 // the target doc path; the chosen file is downscaled and stored inline as a data: URL.
 let pendingUploadPath = null;
+const IMAGE_WARN_KB = 800;  // per-image soft cap
+const DOC_WARN_MB = 3.5;    // whole-program soft cap (localStorage ~5 MB)
 const imgFileInput = document.createElement('input');
 imgFileInput.type = 'file';
 imgFileInput.accept = 'image/*';
@@ -564,7 +575,16 @@ imgFileInput.addEventListener('change', async (e) => {
     setPath(State.doc, path, dataUrl);
     renderForm();
     State.emit();
-    toast(`Image added (${Math.round(dataUrlBytes(dataUrl) / 1024)} KB)`);
+    const kb = Math.round(dataUrlBytes(dataUrl) / 1024);
+    // Per-image soft cap: even after downscaling, flag anything unusually heavy.
+    toast(kb > IMAGE_WARN_KB
+      ? `Image added (${kb} KB) — that's large; a smaller/simpler image keeps things fast.`
+      : `Image added (${kb} KB)`);
+    // Whole-program cap: browsers cap localStorage near ~5 MB.
+    const totalMB = JSON.stringify(State.doc).length / (1024 * 1024);
+    if (totalMB > DOC_WARN_MB) {
+      setTimeout(() => toast(`Your program is now ${totalMB.toFixed(1)} MB. Export JSON to keep a safe copy — browser storage caps around 5 MB.`), 2600);
+    }
   } catch (err) {
     toast('Could not add image: ' + err.message);
   }

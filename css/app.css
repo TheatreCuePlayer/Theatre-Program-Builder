@@ -29,6 +29,7 @@ details.grp[open] > summary.grp-head{ margin-bottom:8px; }
 details.grp[open] > summary .grp-title::before{ transform:rotate(90deg); }
 summary.grp-head:hover .grp-title{ color:var(--ink); }
 .grp-sub{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:10px 0 2px; padding-top:8px; border-top:1px dashed var(--line); }
+.sub-note{ font-weight:400; text-transform:none; letter-spacing:0; font-style:italic; color:#94a3b8; }
 .grp-body{ display:flex; flex-direction:column; gap:6px; }
 .fld-wrap{ display:flex; flex-direction:column; gap:2px; }
 .fld-label{ font-size:11px; color:var(--muted); }
@@ -92,6 +93,13 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 .cover-credits{ font-family:var(--serif); font-size:13pt; color:#334155; line-height:1.5; }
 .cover-foot{ margin-top:auto; font-family:var(--sans); font-size:9pt; color:var(--muted); line-height:1.5; }
 .cover-license{ margin-top:.12in; font-size:7.5pt; max-width:3.6in; }
+/* Cover image: show the whole poster within the cover area (no crop). Default height is
+   auto so it renders in the section-card thumbnail/board (which have no fixed height);
+   inside an auto-mode cover page it fills the fixed page height. */
+.cover.cover-has-image{ padding:0; }
+.cover-image{ width:100%; height:auto; object-fit:contain; display:block; }
+.page-cover .page-body > .cover.cover-has-image,
+.page-cover .page-body > .cover.cover-has-image .cover-image{ height:100%; }
 
 /* Content blocks */
 .block{ break-inside:avoid; }

@@ -106,6 +106,9 @@ function sectionInnerHTML(id, doc) {
   const m = doc.meta;
   switch (id) {
     case 'cover':
+      if (m.coverImage) {
+        return `<div class="cover cover-has-image"><img class="cover-image" src="${attr(m.coverImage)}" alt=""></div>`;
+      }
       return `
         <div class="cover">
           ${m.subtitle ? `<div class="cover-kicker">${esc(m.subtitle)}</div>` : ''}
