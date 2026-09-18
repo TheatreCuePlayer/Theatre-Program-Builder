@@ -46,6 +46,30 @@ function qrSVG(text) {
 
 const splitNames = (s) => String(s || '').split(/[\n,]+/).map(x => x.trim()).filter(Boolean);
 
+// A block image (custom section). Fixed-height box (via .img-<size> CSS) keeps
+// pagination deterministic; object-fit:contain shows the whole image without cropping.
+function blockImage(url) {
+  if (!url) return `<div class="block-img photo-empty"><span>image</span></div>`;
+  return `<img class="block-img" src="${attr(url)}" loading="eager" alt="">`;
+}
+
+// HTML for a user-added custom section (image or text box).
+function customInnerHTML(item) {
+  if (item.type === 'image') {
+    const head = item.heading ? sectionHead(item.heading) : '';
+    const cap = item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : '';
+    return head + `<figure class="img-block img-${item.size || 'medium'}">${blockImage(item.url)}${cap}</figure>`;
+  }
+  const h = item.heading || '';
+  return (h ? sectionHead(h) : '') + `<div class="prose">${nl2br(item.body)}</div>`;
+}
+
+const customHasContent = (item) =>
+  item.type === 'image' ? !!(item.url || item.heading || item.caption)
+                        : !!((item.body || '').trim() || item.heading);
+const customLabel = (item) =>
+  item.title || (item.type === 'image' ? 'Image' : 'Text box');
+
 /* ---------- item renderers (shared by whole-card HTML and flow blocks) ---------- */
 const castRow = (c) => `<dl class="two-col-list"><div class="row"><dt>${esc(c.character)}</dt><dd>${esc(c.performer)}</dd></div></dl>`;
 const roleRow = (r) => `<dl class="two-col-list"><div class="row"><dt>${esc(r.role)}</dt><dd>${esc(r.name)}</dd></div></dl>`;
@@ -132,13 +156,22 @@ function hasContent(id, doc) {
 }
 
 function buildCards(doc) {
-  return SECTIONS.filter(s => hasContent(s.id, doc)).map(sec => {
+  const cards = SECTIONS.filter(s => hasContent(s.id, doc)).map(sec => {
     const el = document.createElement('div');
     el.className = 'section-card';
     el.dataset.card = sec.id;
     el.innerHTML = sectionInnerHTML(sec.id, doc);
     return { id: sec.id, title: sec.title, zone: sec.zone, el };
   });
+  // Custom sections are always shown (the user added them on purpose) and live in the body zone.
+  (doc.custom || []).forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'section-card';
+    el.dataset.card = item.id;
+    el.innerHTML = customInnerHTML(item);
+    cards.push({ id: item.id, title: customLabel(item), zone: 'inner', el });
+  });
+  return cards;
 }
 
 /* ---------- fine-grained flow blocks (auto pagination; lists split across pages) ---------- */
@@ -170,6 +203,19 @@ function buildBlocks(doc) {
   list('management', 'inner', 'Management', doc.management.filter(r => r.name || r.role), roleRow);
   list('crew', 'inner', 'Production Crew', doc.crew.filter(c => c.category || c.names), crewRow);
   prose('productionNotes', 'inner', 'Production Notes', doc.productionNotes);
+
+  // Custom sections flow at the end of the body in Auto mode; the Assembly Board is
+  // how you place each one on a specific page.
+  (doc.custom || []).filter(customHasContent).forEach(item => {
+    if (item.type === 'image') {
+      if (item.heading) push('inner', true, sectionHead(item.heading));
+      const cap = item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : '';
+      push('inner', false, `<figure class="img-block img-${item.size || 'medium'}">${blockImage(item.url)}${cap}</figure>`);
+    } else {
+      if (item.heading) push('inner', true, sectionHead(item.heading));
+      push('inner', false, `<div class="prose">${nl2br(item.body)}</div>`);
+    }
+  });
   prose('acknowledgments', 'back', 'Acknowledgments', doc.acknowledgments);
   list('qr', 'back', 'Scan for More', doc.qr.filter(q => q.url || q.label), qrTile);
   prose('backPage', 'back', 'Back Page', doc.backPage);

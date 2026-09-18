@@ -39,6 +39,43 @@ function listBlock(title, key, rows, cols, opts = {}) {
   return `<section class="grp">${head}<div class="grp-body">${body}</div></section>`;
 }
 
+// Custom sections (images / text boxes) — variable count, per-type fields, reorderable.
+const IMG_SIZES = ['small', 'medium', 'large', 'xlarge'];
+function customBlock(items) {
+  const head = `<div class="grp-head"><span>Custom Sections</span><span class="custom-adds">
+    <button class="row-add" data-addcustom="image">+ Image</button>
+    <button class="row-add" data-addcustom="text">+ Text box</button></span></div>`;
+  const rows = items.map((it, i) => {
+    const reorder = `<div class="row-move">
+      <button data-cmove="${i}" data-dir="-1" title="Move up" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button data-cmove="${i}" data-dir="1" title="Move down" ${i === items.length - 1 ? 'disabled' : ''}>▼</button></div>`;
+    let fields;
+    if (it.type === 'image') {
+      fields = `
+        <input data-path="custom.${i}.title" value="${escAttr(it.title)}" class="fld" placeholder="Label (shown on the board)">
+        <input data-path="custom.${i}.url" value="${escAttr(it.url)}" class="fld" placeholder="Image URL or images/name.jpg">
+        <input data-path="custom.${i}.caption" value="${escAttr(it.caption)}" class="fld" placeholder="Caption (optional)">
+        <input data-path="custom.${i}.heading" value="${escAttr(it.heading)}" class="fld" placeholder="Printed heading (optional)">
+        <label class="fld-inline">Size
+          <select data-path="custom.${i}.size" class="fld">
+            ${IMG_SIZES.map(s => `<option value="${s}" ${it.size === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </label>`;
+    } else {
+      fields = `
+        <input data-path="custom.${i}.title" value="${escAttr(it.title)}" class="fld" placeholder="Label (shown on the board)">
+        <input data-path="custom.${i}.heading" value="${escAttr(it.heading)}" class="fld" placeholder="Printed heading (optional)">
+        <textarea data-path="custom.${i}.body" rows="3" class="fld" placeholder="Text">${escAttr(it.body)}</textarea>`;
+    }
+    return `<div class="list-row stacked">
+      <span class="custom-type" title="${it.type}">${it.type === 'image' ? '🖼' : '¶'}</span>
+      ${reorder}<div class="row-fields">${fields}</div>
+      <button class="row-del" data-delcustom="${i}" title="Remove">✕</button></div>`;
+  }).join('');
+  const empty = `<div class="empty-hint">Add image or text-box sections — each becomes its own draggable card on the Assembly Board.</div>`;
+  return `<section class="grp">${head}<div class="grp-body">${rows || empty}</div></section>`;
+}
+
 function renderForm() {
   const d = State.doc;
   const m = d.meta;
@@ -95,7 +132,23 @@ function renderForm() {
     <section class="grp">
       <div class="grp-head"><span>Back Page</span></div>
       <div class="grp-body">${field('backPage', '', d.backPage, 'textarea')}</div>
-    </section>`;
+    </section>
+    ${customBlock(d.custom)}`;
+}
+
+let customSeq = 0;
+const uid = () => 'c' + Date.now().toString(36) + (customSeq++).toString(36);
+function newCustom(type) {
+  return type === 'image'
+    ? { id: uid(), type: 'image', title: '', url: '', caption: '', heading: '', size: 'medium' }
+    : { id: uid(), type: 'text', title: '', heading: '', body: '' };
+}
+// When a section is deleted, drop it from any manual (board) arrangement too.
+function cleanupManual(id) {
+  if (Array.isArray(State.doc.manual)) State.doc.manual.forEach(p => {
+    const i = p.indexOf(id);
+    if (i !== -1) p.splice(i, 1);
+  });
 }
 
 // Write a value into the doc by dotted path (e.g. "cast.0.character").
@@ -128,7 +181,7 @@ $('#sidebar').addEventListener('input', (e) => {
 $('#sidebar').addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
-  const { add, del, move, i, dir } = btn.dataset;
+  const { add, del, move, i, dir, addcustom, delcustom, cmove } = btn.dataset;
   if (add) {
     State.doc[add].push(rowTemplate[add]());
     renderForm(); State.emit();
@@ -140,6 +193,19 @@ $('#sidebar').addEventListener('click', (e) => {
     const from = Number(i), to = from + Number(dir);
     if (to < 0 || to >= arr.length) return;
     [arr[from], arr[to]] = [arr[to], arr[from]]; // swap adjacent
+    renderForm(); State.emit();
+  } else if (addcustom) {
+    State.doc.custom.push(newCustom(addcustom));
+    renderForm(); State.emit();
+  } else if (delcustom !== undefined) {
+    const [removed] = State.doc.custom.splice(Number(delcustom), 1);
+    if (removed) cleanupManual(removed.id);
+    renderForm(); State.emit();
+  } else if (cmove !== undefined) {
+    const arr = State.doc.custom;
+    const from = Number(cmove), to = from + Number(dir);
+    if (to < 0 || to >= arr.length) return;
+    [arr[from], arr[to]] = [arr[to], arr[from]];
     renderForm(); State.emit();
   }
 });

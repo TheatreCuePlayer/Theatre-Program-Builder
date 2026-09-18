@@ -35,6 +35,10 @@ function blankDoc() {
     productionNotes: '',
     acknowledgments: '',
     backPage: '',
+    // User-added sections (images / text boxes). Each is its own board card.
+    // { id, type:'image', title, url, caption, size, heading }
+    // { id, type:'text',  title, heading, body }
+    custom: [],
     options: { size: 'half', layoutMode: 'auto' },
     manual: null,
   };
@@ -139,6 +143,7 @@ function migrate(d) {
     productionNotes: str(d.productionNotes),
     acknowledgments: str(d.acknowledgments),
     backPage: str(d.backPage) || str(d.notes),
+    custom: arr(d.custom, []),
     options: Object.assign(base.options, d.options || {}),
     manual: Array.isArray(d.manual) ? d.manual : null,
   };
