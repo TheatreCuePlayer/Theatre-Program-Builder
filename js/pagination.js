@@ -64,6 +64,7 @@ function paginateAuto(stage, doc) {
   stage.innerHTML = '';
 
   const cover = newPage(doc, 'cover');
+  cover.body.dataset.section = 'cover'; // per-section typography hook
   cover.body.innerHTML = coverHTML(doc);
   stage.appendChild(cover.page);
 
@@ -92,6 +93,7 @@ function paginateManual(stage, doc) {
       if (!card) return;
       const wrap = document.createElement('div');
       wrap.className = 'block';
+      wrap.dataset.section = id; // per-section typography hook
       wrap.innerHTML = card.el.innerHTML;
       p.body.appendChild(wrap);
     });

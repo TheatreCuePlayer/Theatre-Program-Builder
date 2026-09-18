@@ -160,6 +160,7 @@ function buildCards(doc) {
     const el = document.createElement('div');
     el.className = 'section-card';
     el.dataset.card = sec.id;
+    el.dataset.section = sec.id; // per-section typography hook
     el.innerHTML = sectionInnerHTML(sec.id, doc);
     return { id: sec.id, title: sec.title, zone: sec.zone, el };
   });
@@ -168,6 +169,7 @@ function buildCards(doc) {
     const el = document.createElement('div');
     el.className = 'section-card';
     el.dataset.card = item.id;
+    el.dataset.section = item.id; // per-section typography hook
     el.innerHTML = customInnerHTML(item);
     cards.push({ id: item.id, title: customLabel(item), zone: 'inner', el });
   });
@@ -177,21 +179,22 @@ function buildCards(doc) {
 /* ---------- fine-grained flow blocks (auto pagination; lists split across pages) ---------- */
 function buildBlocks(doc) {
   const blocks = [];
-  const push = (zone, keepWithNext, html) => {
+  const push = (id, zone, keepWithNext, html) => {
     const el = document.createElement('div');
     el.className = 'block';
+    el.dataset.section = id; // per-section typography hook
     el.innerHTML = html;
     blocks.push({ zone, keepWithNext, el });
   };
   const list = (id, zone, title, items, rowFn) => {
     if (!items.length) return;
-    push(zone, true, sectionHead(title));
-    items.forEach(it => push(zone, false, rowFn(it)));
+    push(id, zone, true, sectionHead(title));
+    items.forEach(it => push(id, zone, false, rowFn(it)));
   };
   const prose = (id, zone, title, text, by) => {
     if (!(text || '').trim()) return;
-    push(zone, true, sectionHead(title));
-    push(zone, false, `<div class="prose">${nl2br(text)}</div>${by ? `<div class="note-by">— ${esc(by)}</div>` : ''}`);
+    push(id, zone, true, sectionHead(title));
+    push(id, zone, false, `<div class="prose">${nl2br(text)}</div>${by ? `<div class="note-by">— ${esc(by)}</div>` : ''}`);
   };
 
   // Reading order mirrors SECTIONS.
@@ -208,12 +211,12 @@ function buildBlocks(doc) {
   // how you place each one on a specific page.
   (doc.custom || []).filter(customHasContent).forEach(item => {
     if (item.type === 'image') {
-      if (item.heading) push('inner', true, sectionHead(item.heading));
+      if (item.heading) push(item.id, 'inner', true, sectionHead(item.heading));
       const cap = item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : '';
-      push('inner', false, `<figure class="img-block img-${item.size || 'medium'}">${blockImage(item.url)}${cap}</figure>`);
+      push(item.id, 'inner', false, `<figure class="img-block img-${item.size || 'medium'}">${blockImage(item.url)}${cap}</figure>`);
     } else {
-      if (item.heading) push('inner', true, sectionHead(item.heading));
-      push('inner', false, `<div class="prose">${nl2br(item.body)}</div>`);
+      if (item.heading) push(item.id, 'inner', true, sectionHead(item.heading));
+      push(item.id, 'inner', false, `<div class="prose">${nl2br(item.body)}</div>`);
     }
   });
   prose('acknowledgments', 'back', 'Acknowledgments', doc.acknowledgments);

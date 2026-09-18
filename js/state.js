@@ -1,5 +1,6 @@
 // state.js — single source of truth, autosave, JSON import/export
-const SCHEMA = 2;
+import { blankStyles, migrateStyles } from './typography.js';
+const SCHEMA = 3;
 const LS_KEY = 'tpb.v1.doc';
 
 function blankDoc() {
@@ -39,6 +40,8 @@ function blankDoc() {
     // { id, type:'image', title, url, caption, size, heading }
     // { id, type:'text',  title, heading, body }
     custom: [],
+    // Per-role + per-section typography (fonts, weight, italic, size, alignment).
+    styles: blankStyles(),
     options: { size: 'half', layoutMode: 'auto' },
     manual: null,
   };
@@ -144,6 +147,7 @@ function migrate(d) {
     acknowledgments: str(d.acknowledgments),
     backPage: str(d.backPage) || str(d.notes),
     custom: arr(d.custom, []),
+    styles: migrateStyles(d.styles),
     options: Object.assign(base.options, d.options || {}),
     manual: Array.isArray(d.manual) ? d.manual : null,
   };

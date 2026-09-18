@@ -2,9 +2,10 @@
 import { State } from './state.js';
 import { paginate } from './pagination.js';
 import { renderBoard } from './board.js';
-import { buildCards } from './render.js';
+import { buildCards, SECTIONS } from './render.js';
 import { buildPrintRoot } from './booklet.js';
 import { downloadSVG, copyPNG, libReady } from './export.js';
+import { ROLES, ROLE_BY_KEY, SECTION_ROLES, FONTS, SIZE_OPTIONS, applyTypography } from './typography.js';
 
 const $ = (sel) => document.querySelector(sel);
 const stage = $('#stage');
@@ -95,6 +96,15 @@ function renderForm() {
         ${field('meta.licensing', 'Licensing / credit line', m.licensing, 'textarea')}
       </div>
     </section>
+    <section class="grp" id="type-panel">
+      <div class="grp-head"><span>Typography</span>
+        <button class="row-add" data-tyreset title="Clear styles for the current scope">Reset</button></div>
+      <div class="grp-body">
+        <label class="fld-inline ty-scope-row">Apply to
+          <select id="type-scope" class="fld"></select></label>
+        <div id="type-controls"></div>
+      </div>
+    </section>
     <section class="grp">
       <div class="grp-head"><span>Director's Note</span></div>
       <div class="grp-body">
@@ -134,6 +144,120 @@ function renderForm() {
       <div class="grp-body">${field('backPage', '', d.backPage, 'textarea')}</div>
     </section>
     ${customBlock(d.custom)}`;
+  initTypographyPanel();
+}
+
+/* ----------------------------- typography panel ----------------------------- */
+let typeScope = 'global'; // 'global' or a section id; persists across form rebuilds
+
+// Label + role set for whatever scope is selected.
+function scopeRoleKeys(scope) {
+  if (scope === 'global') return ROLES.map(r => r.key);
+  const fixed = SECTION_ROLES[scope];
+  if (fixed) return fixed;
+  const item = (State.doc.custom || []).find(c => c.id === scope);
+  if (item) return item.type === 'image' ? ['heading', 'caption'] : ['heading', 'body'];
+  return [];
+}
+
+function scopeOptions() {
+  const opts = [`<option value="global">All sections (global)</option>`];
+  SECTIONS.forEach(s => { opts.push(`<option value="${s.id}">— ${escAttr(s.title)}</option>`); });
+  (State.doc.custom || []).forEach(c => {
+    const label = c.title || (c.type === 'image' ? 'Image' : 'Text box');
+    opts.push(`<option value="${escAttr(c.id)}">— ${escAttr(label)}</option>`);
+  });
+  return opts.join('');
+}
+
+const EMPTY_STYLE = { font: '', weight: '', italic: '', size: '', align: '' };
+function getStyle(scope, roleKey) {
+  const st = State.doc.styles;
+  if (scope === 'global') return st.roles[roleKey] || EMPTY_STYLE;
+  return (st.sections[scope] && st.sections[scope][roleKey]) || EMPTY_STYLE;
+}
+
+function updateStyle(scope, roleKey, prop, value) {
+  const st = State.doc.styles;
+  if (scope === 'global') {
+    st.roles[roleKey][prop] = value;
+  } else {
+    const sec = st.sections[scope] || (st.sections[scope] = {});
+    const role = sec[roleKey] || (sec[roleKey] = { ...EMPTY_STYLE });
+    role[prop] = value;
+    // Prune empty overrides so exported JSON stays tidy.
+    if (Object.values(role).every(v => !v)) delete sec[roleKey];
+    if (!Object.keys(sec).length) delete st.sections[scope];
+  }
+  State.emit();
+}
+
+function resetScope() {
+  const st = State.doc.styles;
+  if (typeScope === 'global') ROLES.forEach(r => { st.roles[r.key] = { ...EMPTY_STYLE }; });
+  else delete st.sections[typeScope];
+  renderTypeControls();
+  State.emit();
+}
+
+// One <select>. `opts` is [[value,label], …]; a leading Default option is added.
+function tySelect(scope, roleKey, prop, current, opts, defaultLabel = 'Default') {
+  const options = [`<option value="">${defaultLabel}</option>`]
+    .concat(opts.map(([v, l]) => `<option value="${v}" ${current === v ? 'selected' : ''}>${l}</option>`))
+    .join('');
+  return `<select class="fld ty-sel" data-ty-role="${roleKey}" data-ty-prop="${prop}" data-ty-scopeid="${escAttr(scope)}">${options}</select>`;
+}
+
+function fontSelect(scope, roleKey, current) {
+  const groups = [['serif', 'Serif'], ['sans', 'Sans'], ['display', 'Display'], ['script', 'Script']];
+  let inner = `<option value="">Default</option>`;
+  groups.forEach(([kind, label]) => {
+    const fonts = FONTS.filter(f => f.kind === kind);
+    if (!fonts.length) return;
+    inner += `<optgroup label="${label}">` +
+      fonts.map(f => `<option value="${f.id}" ${current === f.id ? 'selected' : ''}>${escAttr(f.label)}</option>`).join('') +
+      `</optgroup>`;
+  });
+  return `<select class="fld ty-sel ty-font" data-ty-role="${roleKey}" data-ty-prop="font" data-ty-scopeid="${escAttr(scope)}">${inner}</select>`;
+}
+
+function roleControls(scope, roleKey) {
+  const role = ROLE_BY_KEY[roleKey];
+  const s = getStyle(scope, roleKey);
+  return `<div class="ty-role">
+    <div class="ty-role-head">${escAttr(role.label)}</div>
+    ${fontSelect(scope, roleKey, s.font)}
+    <div class="ty-row">
+      ${tySelect(scope, roleKey, 'weight', s.weight, [['normal', 'Normal'], ['bold', 'Bold']], 'Weight')}
+      ${tySelect(scope, roleKey, 'italic', s.italic, [['normal', 'Upright'], ['italic', 'Italic']], 'Italic')}
+    </div>
+    <div class="ty-row">
+      ${tySelect(scope, roleKey, 'size', s.size, SIZE_OPTIONS.map(o => [o.v, o.label]), 'Size')}
+      ${tySelect(scope, roleKey, 'align', s.align, [['left', 'Left'], ['center', 'Center'], ['right', 'Right'], ['justify', 'Full (justify)']], 'Align')}
+    </div>
+  </div>`;
+}
+
+function renderTypeControls() {
+  const host = $('#type-controls');
+  if (!host) return;
+  const keys = scopeRoleKeys(typeScope);
+  const hint = typeScope === 'global'
+    ? ''
+    : `<div class="empty-hint">Overrides just this section. Leave a control on its label to inherit the global style.</div>`;
+  host.innerHTML = hint + keys.map(k => roleControls(typeScope, k)).join('');
+}
+
+function initTypographyPanel() {
+  const sel = $('#type-scope');
+  if (!sel) return;
+  // Scope may have pointed at a custom section that was since removed.
+  if (typeScope !== 'global' && !SECTION_ROLES[typeScope] && !(State.doc.custom || []).some(c => c.id === typeScope)) {
+    typeScope = 'global';
+  }
+  sel.innerHTML = scopeOptions();
+  sel.value = typeScope;
+  renderTypeControls();
 }
 
 let customSeq = 0;
@@ -178,9 +302,19 @@ $('#sidebar').addEventListener('input', (e) => {
 });
 
 // Structural edits (add / remove / reorder rows) rebuild the form.
+// Typography controls (delegated so they survive form rebuilds).
+$('#sidebar').addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.id === 'type-scope') { typeScope = t.value; renderTypeControls(); return; }
+  const roleKey = t.dataset.tyRole;
+  if (!roleKey) return;
+  updateStyle(t.dataset.tyScopeid, roleKey, t.dataset.tyProp, t.value);
+});
+
 $('#sidebar').addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
+  if (btn.dataset.tyreset !== undefined) { resetScope(); return; }
   const { add, del, move, i, dir, addcustom, delcustom, cmove } = btn.dataset;
   if (add) {
     State.doc[add].push(rowTemplate[add]());
@@ -269,7 +403,16 @@ async function guardExport(fn) {
   try { const r = await fn(); if (typeof r === 'string' && r !== 'clipboard') {} } catch (e) { toast('Export failed: ' + e.message); }
 }
 
-function refreshAll() { refreshPreview(); refreshCards(); }
+// Inject the typography <style>/<link>; when the font set changed, re-measure once the
+// webfonts finish loading so auto-pagination reflects their real metrics.
+function applyAndReflow() {
+  const fontsChanged = applyTypography(State.doc);
+  if (fontsChanged && document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => refreshPreview());
+  }
+}
+
+function refreshAll() { applyAndReflow(); refreshPreview(); refreshCards(); }
 
 /* ----------------------------- toolbar ----------------------------- */
 function setSize(size) {
@@ -362,7 +505,7 @@ function toast(msg) {
 /* ----------------------------- boot ----------------------------- */
 // Any state change (toggles, board drag/drop, import) re-renders preview + cards.
 // The form is only rebuilt explicitly (add/remove rows, import) to preserve the caret.
-State.subscribe(() => { refreshPreview(); refreshCards(); });
+State.subscribe(() => { applyAndReflow(); refreshPreview(); refreshCards(); });
 
 renderForm();
 syncToolbar();
