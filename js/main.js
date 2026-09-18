@@ -24,8 +24,24 @@ function field(path, label, value, type = 'text') {
 }
 const escAttr = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
+// Collapsible sidebar groups. Open/closed state persists across form rebuilds (add/remove
+// rows re-renders the whole form) so a section you collapsed stays collapsed.
+const grpState = {}; // id -> open?  (absent = open by default)
+function detailsGroup(id, title, bodyHTML, headExtra = '') {
+  const open = grpState[id] === false ? '' : 'open';
+  return `<details class="grp" data-grp="${id}" ${open}>
+    <summary class="grp-head"><span class="grp-title">${title}</span>${headExtra}</summary>
+    <div class="grp-body">${bodyHTML}</div>
+  </details>`;
+}
+function initCollapsibles() {
+  document.querySelectorAll('#sidebar details[data-grp]').forEach(d => {
+    d.addEventListener('toggle', () => { grpState[d.dataset.grp] = d.open; });
+  });
+}
+
 function listBlock(title, key, rows, cols, opts = {}) {
-  const head = `<div class="grp-head"><span>${title}</span><button class="row-add" data-add="${key}">+ Add</button></div>`;
+  const addBtn = `<button class="row-add" data-add="${key}">+ Add</button>`;
   const body = rows.map((row, i) => {
     const inputs = cols.map(c => c.type === 'textarea'
       ? `<textarea data-path="${key}.${i}.${c.k}" rows="${c.rows || 2}" class="fld" placeholder="${c.ph}">${escAttr(row[c.k])}</textarea>`
@@ -37,15 +53,15 @@ function listBlock(title, key, rows, cols, opts = {}) {
       </div>` : '';
     return `<div class="list-row ${opts.stacked ? 'stacked' : ''}">${reorder}<div class="row-fields">${inputs}</div><button class="row-del" data-del="${key}" data-i="${i}" title="Remove">✕</button></div>`;
   }).join('');
-  return `<section class="grp">${head}<div class="grp-body">${body}</div></section>`;
+  return detailsGroup(key, title, body, addBtn);
 }
 
 // Custom sections (images / text boxes) — variable count, per-type fields, reorderable.
 const IMG_SIZES = ['small', 'medium', 'large', 'xlarge'];
 function customBlock(items) {
-  const head = `<div class="grp-head"><span>Custom Sections</span><span class="custom-adds">
+  const headExtra = `<span class="custom-adds">
     <button class="row-add" data-addcustom="image">+ Image</button>
-    <button class="row-add" data-addcustom="text">+ Text box</button></span></div>`;
+    <button class="row-add" data-addcustom="text">+ Text box</button></span>`;
   const rows = items.map((it, i) => {
     const reorder = `<div class="row-move">
       <button data-cmove="${i}" data-dir="-1" title="Move up" ${i === 0 ? 'disabled' : ''}>▲</button>
@@ -74,44 +90,35 @@ function customBlock(items) {
       <button class="row-del" data-delcustom="${i}" title="Remove">✕</button></div>`;
   }).join('');
   const empty = `<div class="empty-hint">Add image or text-box sections — each becomes its own draggable card on the Assembly Board.</div>`;
-  return `<section class="grp">${head}<div class="grp-body">${rows || empty}</div></section>`;
+  return detailsGroup('custom', 'Custom Sections', rows || empty, headExtra);
 }
 
 function renderForm() {
   const d = State.doc;
   const m = d.meta;
+  const typographyBody = `
+    <label class="fld-inline ty-scope-row">Apply to
+      <select id="type-scope" class="fld"></select></label>
+    <div id="type-controls"></div>`;
+  const showInfoBody = `
+    ${field('meta.title', 'Title', m.title)}
+    ${field('meta.subtitle', 'Subtitle / Company', m.subtitle)}
+    ${field('meta.book', 'Book by', m.book)}
+    ${field('meta.music', 'Music by', m.music)}
+    ${field('meta.lyrics', 'Lyrics by', m.lyrics)}
+    ${field('meta.director', 'Directed by', m.director)}
+    ${field('meta.producer', 'Produced by', m.producer)}
+    ${field('meta.venue', 'Venue', m.venue)}
+    ${field('meta.dates', 'Dates', m.dates)}
+    ${field('meta.licensing', 'Licensing / credit line', m.licensing, 'textarea')}
+    <div class="grp-sub">Director's Note</div>
+    ${field('directorNote.text', 'Note', d.directorNote.text, 'textarea')}
+    ${field('directorNote.by', 'Signed by', d.directorNote.by)}`;
+
   $('#sidebar').innerHTML = `
-    <section class="grp">
-      <div class="grp-head"><span>Show Info</span></div>
-      <div class="grp-body">
-        ${field('meta.title', 'Title', m.title)}
-        ${field('meta.subtitle', 'Subtitle / Company', m.subtitle)}
-        ${field('meta.book', 'Book by', m.book)}
-        ${field('meta.music', 'Music by', m.music)}
-        ${field('meta.lyrics', 'Lyrics by', m.lyrics)}
-        ${field('meta.director', 'Directed by', m.director)}
-        ${field('meta.producer', 'Produced by', m.producer)}
-        ${field('meta.venue', 'Venue', m.venue)}
-        ${field('meta.dates', 'Dates', m.dates)}
-        ${field('meta.licensing', 'Licensing / credit line', m.licensing, 'textarea')}
-      </div>
-    </section>
-    <section class="grp" id="type-panel">
-      <div class="grp-head"><span>Typography</span>
-        <button class="row-add" data-tyreset title="Clear styles for the current scope">Reset</button></div>
-      <div class="grp-body">
-        <label class="fld-inline ty-scope-row">Apply to
-          <select id="type-scope" class="fld"></select></label>
-        <div id="type-controls"></div>
-      </div>
-    </section>
-    <section class="grp">
-      <div class="grp-head"><span>Director's Note</span></div>
-      <div class="grp-body">
-        ${field('directorNote.text', '', d.directorNote.text, 'textarea')}
-        ${field('directorNote.by', 'Signed by', d.directorNote.by)}
-      </div>
-    </section>
+    ${detailsGroup('typography', 'Typography', typographyBody,
+      `<button class="row-add" data-tyreset title="Clear styles for the current scope">Reset</button>`)}
+    ${detailsGroup('showinfo', 'Show Info', showInfoBody)}
     ${listBlock('Cast List (no photos)', 'cast', d.cast, [
       { k: 'character', ph: 'Character' }, { k: 'performer', ph: 'Performer' }])}
     ${listBlock('Musical Numbers / Songs', 'songs', d.songs, [
@@ -128,22 +135,17 @@ function renderForm() {
       { k: 'category', ph: 'Category (e.g. Scenery Construction)' },
       { k: 'names', ph: 'Names — one per line, or comma-separated', type: 'textarea', rows: 3 }],
       { stacked: true })}
+    ${detailsGroup('productionNotes', 'Production Notes',
+      field('productionNotes', '', d.productionNotes, 'textarea'))}
+    ${detailsGroup('acknowledgments', 'Acknowledgments (back)',
+      field('acknowledgments', '', d.acknowledgments, 'textarea'))}
+    ${detailsGroup('backPage', 'Back Page',
+      field('backPage', '', d.backPage, 'textarea'))}
     ${listBlock('QR Codes', 'qr', d.qr, [
       { k: 'label', ph: 'Label (e.g. Donate)' }, { k: 'url', ph: 'Link (https://…)' },
       { k: 'caption', ph: 'Caption (optional)' }], { stacked: true })}
-    <section class="grp">
-      <div class="grp-head"><span>Production Notes</span></div>
-      <div class="grp-body">${field('productionNotes', '', d.productionNotes, 'textarea')}</div>
-    </section>
-    <section class="grp">
-      <div class="grp-head"><span>Acknowledgments (back)</span></div>
-      <div class="grp-body">${field('acknowledgments', '', d.acknowledgments, 'textarea')}</div>
-    </section>
-    <section class="grp">
-      <div class="grp-head"><span>Back Page</span></div>
-      <div class="grp-body">${field('backPage', '', d.backPage, 'textarea')}</div>
-    </section>
     ${customBlock(d.custom)}`;
+  initCollapsibles();
   initTypographyPanel();
 }
 
@@ -314,6 +316,8 @@ $('#sidebar').addEventListener('change', (e) => {
 $('#sidebar').addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
+  // A button inside a section header (<summary>) must act without toggling the section.
+  if (btn.closest('summary')) e.preventDefault();
   if (btn.dataset.tyreset !== undefined) { resetScope(); return; }
   const { add, del, move, i, dir, addcustom, delcustom, cmove } = btn.dataset;
   if (add) {
