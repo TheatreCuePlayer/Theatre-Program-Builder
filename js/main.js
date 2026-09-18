@@ -6,6 +6,7 @@ import { buildCards, SECTIONS } from './render.js';
 import { buildPrintRoot } from './booklet.js';
 import { downloadSVG, copyPNG, libReady } from './export.js';
 import { ROLES, ROLE_BY_KEY, SECTION_ROLES, FONTS, SIZE_OPTIONS, applyTypography } from './typography.js';
+import { fileToDataURL, dataUrlBytes } from './upload.js';
 
 const $ = (sel) => document.querySelector(sel);
 const stage = $('#stage');
@@ -44,10 +45,35 @@ function initCollapsibles() {
   });
 }
 
+// An image input that also accepts an upload from the device. A stored data: URL is shown
+// as a thumbnail chip (never the giant string); a normal URL/path keeps the text box.
+function imageField(path, value, ph) {
+  const v = value || '';
+  const isData = /^data:/.test(v);
+  const thumb = v ? `<img class="img-thumb" src="${escAttr(v)}" alt="">` : '';
+  if (isData) {
+    return `<div class="img-field"><div class="img-uploaded">${thumb}
+      <span class="img-tag">Uploaded image</span>
+      <span class="img-acts">
+        <button class="mini-btn" data-upload="${escAttr(path)}">Replace</button>
+        <button class="mini-btn" data-imgclear="${escAttr(path)}">Clear</button>
+      </span></div></div>`;
+  }
+  return `<div class="img-field">
+    <div class="img-entry">
+      <input data-path="${escAttr(path)}" value="${escAttr(v)}" class="fld" placeholder="${ph}">
+      <button class="mini-btn" data-upload="${escAttr(path)}" title="Upload from your device">⬆ Upload</button>
+    </div>
+    ${v ? `<div class="img-uploaded">${thumb}<span class="img-tag">Linked image</span></div>` : ''}
+  </div>`;
+}
+
 function listBlock(title, key, rows, cols, opts = {}) {
   const addBtn = `<button class="row-add" data-add="${key}">+ Add</button>`;
   const body = rows.map((row, i) => {
-    const inputs = cols.map(c => c.type === 'textarea'
+    const inputs = cols.map(c => c.render
+      ? c.render(`${key}.${i}.${c.k}`, row[c.k])
+      : c.type === 'textarea'
       ? `<textarea data-path="${key}.${i}.${c.k}" rows="${c.rows || 2}" class="fld" placeholder="${c.ph}">${escAttr(row[c.k])}</textarea>`
       : `<input data-path="${key}.${i}.${c.k}" value="${escAttr(row[c.k])}" class="fld" placeholder="${c.ph}">`).join('');
     const reorder = opts.reorder ? `
@@ -74,7 +100,7 @@ function customBlock(items) {
     if (it.type === 'image') {
       fields = `
         <input data-path="custom.${i}.title" value="${escAttr(it.title)}" class="fld" placeholder="Label (shown on the board)">
-        <input data-path="custom.${i}.url" value="${escAttr(it.url)}" class="fld" placeholder="Image URL or images/name.jpg">
+        ${imageField(`custom.${i}.url`, it.url, 'Image URL, images/name.jpg, or upload →')}
         <input data-path="custom.${i}.caption" value="${escAttr(it.caption)}" class="fld" placeholder="Caption (optional)">
         <input data-path="custom.${i}.heading" value="${escAttr(it.heading)}" class="fld" placeholder="Printed heading (optional)">
         <label class="fld-inline">Size
@@ -129,7 +155,8 @@ function renderForm() {
       { k: 'act', ph: 'Act / group' }, { k: 'title', ph: 'Song / scene title' }, { k: 'note', ph: 'Note (who sings)' }])}
     ${listBlock("Who's Who (photos + bios · everyone)", 'whoswho', d.whoswho, [
       { k: 'name', ph: 'Name' }, { k: 'credit', ph: 'Role / character' },
-      { k: 'photo', ph: 'Photo URL or images/name.jpg' }, { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
+      { k: 'photo', ph: 'Photo URL or images/name.jpg', render: (p, v) => imageField(p, v, 'Photo URL, images/name.jpg, or upload →') },
+      { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
       { reorder: true, stacked: true })}
     ${listBlock('Creative Team', 'creative', d.creative, [
       { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }])}
@@ -322,6 +349,12 @@ $('#sidebar').addEventListener('click', (e) => {
   if (!btn) return;
   // A button inside a section header (<summary>) must act without toggling the section.
   if (btn.closest('summary')) e.preventDefault();
+  if (btn.dataset.upload !== undefined) { pendingUploadPath = btn.dataset.upload; imgFileInput.click(); return; }
+  if (btn.dataset.imgclear !== undefined) {
+    setPath(State.doc, btn.dataset.imgclear, '');
+    renderForm(); State.emit();
+    return;
+  }
   if (btn.dataset.tyreset !== undefined) { resetScope(); return; }
   const { add, del, move, i, dir, addcustom, delcustom, cmove } = btn.dataset;
   if (add) {
@@ -509,6 +542,36 @@ function toast(msg) {
   clearTimeout(toastT);
   toastT = setTimeout(() => el.classList.remove('show'), 2400);
 }
+
+/* ----------------------------- image upload ----------------------------- */
+// One shared, hidden file picker drives every "Upload"/"Replace" button. The button sets
+// the target doc path; the chosen file is downscaled and stored inline as a data: URL.
+let pendingUploadPath = null;
+const imgFileInput = document.createElement('input');
+imgFileInput.type = 'file';
+imgFileInput.accept = 'image/*';
+imgFileInput.style.display = 'none';
+document.body.appendChild(imgFileInput);
+imgFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = ''; // allow re-picking the same file later
+  const path = pendingUploadPath;
+  pendingUploadPath = null;
+  if (!file || !path) return;
+  toast('Processing image…');
+  try {
+    const dataUrl = await fileToDataURL(file);
+    setPath(State.doc, path, dataUrl);
+    renderForm();
+    State.emit();
+    toast(`Image added (${Math.round(dataUrlBytes(dataUrl) / 1024)} KB)`);
+  } catch (err) {
+    toast('Could not add image: ' + err.message);
+  }
+});
+
+// Warn once storage is full (embedded images are the usual cause).
+State.onSaveError = () => toast('Browser storage is full — export your program as JSON to keep it, and use smaller or linked images.');
 
 /* ----------------------------- boot ----------------------------- */
 // Any state change (toggles, board drag/drop, import) re-renders preview + cards.

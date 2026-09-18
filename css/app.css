@@ -51,6 +51,16 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 .fld-inline select.fld{ width:auto; text-transform:capitalize; }
 .empty-hint{ font-size:11px; color:#94a3b8; font-style:italic; padding:4px 2px; }
 
+/* image field (URL entry + upload) */
+.img-field{ display:flex; flex-direction:column; gap:5px; width:100%; min-width:0; }
+.img-entry{ display:flex; gap:5px; }
+.img-entry .fld{ flex:1; min-width:0; }
+.img-entry .mini-btn{ white-space:nowrap; }
+.img-uploaded{ display:flex; align-items:center; gap:8px; }
+.img-thumb{ width:40px; height:50px; object-fit:cover; border-radius:4px; border:1px solid var(--line); background:#f1f5f9; flex:0 0 auto; }
+.img-tag{ font-size:11px; color:var(--muted); }
+.img-acts{ display:flex; gap:4px; margin-left:auto; }
+
 /* ---- typography panel ---- */
 .ty-scope-row{ width:100%; margin-bottom:8px; }
 .ty-scope-row select.fld{ flex:1; width:auto; }

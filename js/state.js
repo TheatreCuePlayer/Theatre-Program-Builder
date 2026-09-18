@@ -50,6 +50,7 @@ function blankDoc() {
 const State = {
   doc: blankDoc(),
   listeners: new Set(),
+  onSaveError: null, // set by main.js to warn when localStorage is full
 
   init() {
     const saved = this.load();
@@ -67,7 +68,8 @@ const State = {
   update(mutator) { mutator(this.doc); this.emit(); },
 
   save() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(this.doc)); } catch (e) { /* private mode */ }
+    try { localStorage.setItem(LS_KEY, JSON.stringify(this.doc)); return true; }
+    catch (e) { if (this.onSaveError) this.onSaveError(e); return false; } // full or private mode
   },
 
   load() {
