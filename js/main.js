@@ -68,6 +68,44 @@ function imageField(path, value, ph) {
   </div>`;
 }
 
+const optSel = (v, cur, label) => `<option value="${v}"${String(cur) === String(v) ? ' selected' : ''}>${label}</option>`;
+
+// Cover layout controls — shown only once a cover image is set.
+function coverOptionsHTML(m) {
+  if (!m.coverImage) return '';
+  const heights = ['2', '2.5', '3', '3.5', '4', '5', '6'];
+  return `<div class="cover-opts">
+    <label class="fld-inline">Layout
+      <select data-path="meta.coverLayout" class="fld">
+        ${optSel('background', m.coverLayout, 'Image behind text')}
+        ${optSel('top', m.coverLayout, 'Image on top')}
+        ${optSel('bottom', m.coverLayout, 'Image on bottom')}
+      </select></label>
+    <label class="fld-inline">Image fit
+      <select data-path="meta.coverFit" class="fld">
+        ${optSel('cover', m.coverFit, 'Fill (may crop)')}
+        ${optSel('contain', m.coverFit, 'Fit (no crop)')}
+      </select></label>
+    <label class="fld-inline">Text position
+      <select data-path="meta.coverTextPos" class="fld">
+        ${optSel('top', m.coverTextPos, 'Top')}
+        ${optSel('center', m.coverTextPos, 'Center')}
+        ${optSel('bottom', m.coverTextPos, 'Bottom')}
+      </select></label>
+    <label class="fld-inline">Image height
+      <select data-path="meta.coverImageHeight" class="fld">
+        ${heights.map(h => optSel(h, m.coverImageHeight, h + ' in')).join('')}
+      </select></label>
+    <label class="fld-inline">Text panel
+      <select data-path="meta.coverScrim" class="fld">
+        ${optSel('off', m.coverScrim, 'None')}
+        ${optSel('light', m.coverScrim, 'Light')}
+        ${optSel('dark', m.coverScrim, 'Dark')}
+      </select></label>
+    <div class="empty-hint"><b>Text position</b> applies to “Image behind text”. <b>Image height</b> applies to “on top / on bottom”.</div>
+  </div>`;
+}
+
 function listBlock(title, key, rows, cols, opts = {}) {
   const addBtn = `<button class="row-add" data-add="${key}">+ Add</button>`;
   const body = rows.map((row, i) => {
@@ -141,8 +179,9 @@ function renderForm() {
     ${field('meta.venue', 'Venue', m.venue)}
     ${field('meta.dates', 'Dates', m.dates)}
     ${field('meta.licensing', 'Licensing / credit line', m.licensing, 'textarea')}
-    <div class="grp-sub">Cover Image <span class="sub-note">optional — replaces the text cover</span></div>
+    <div class="grp-sub">Cover Image <span class="sub-note">optional — combines with the cover text</span></div>
     ${imageField('meta.coverImage', m.coverImage, 'Cover image URL, images/…, or upload →')}
+    ${coverOptionsHTML(m)}
     <div class="grp-sub">Director's Note</div>
     ${field('directorNote.text', 'Note', d.directorNote.text, 'textarea')}
     ${field('directorNote.by', 'Signed by', d.directorNote.by)}`;

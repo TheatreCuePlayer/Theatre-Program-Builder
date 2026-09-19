@@ -62,6 +62,12 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 .img-tag{ font-size:11px; color:var(--muted); }
 .img-acts{ display:flex; gap:4px; margin-left:auto; }
 
+/* cover layout controls */
+.cover-opts{ display:flex; flex-direction:column; gap:6px; margin-top:6px; padding:8px; border:1px solid var(--line); border-radius:8px; background:#f8fafc; }
+.cover-opts .fld-inline{ justify-content:space-between; }
+.cover-opts select.fld{ width:auto; max-width:62%; }
+.cover-opts .empty-hint{ padding:2px; }
+
 /* ---- typography panel ---- */
 .ty-scope-row{ width:100%; margin-bottom:8px; }
 .ty-scope-row select.fld{ flex:1; width:auto; }
@@ -93,13 +99,36 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 .cover-credits{ font-family:var(--serif); font-size:13pt; color:#334155; line-height:1.5; }
 .cover-foot{ margin-top:auto; font-family:var(--sans); font-size:9pt; color:var(--muted); line-height:1.5; }
 .cover-license{ margin-top:.12in; font-size:7.5pt; max-width:3.6in; }
-/* Cover image: show the whole poster within the cover area (no crop). Default height is
-   auto so it renders in the section-card thumbnail/board (which have no fixed height);
-   inside an auto-mode cover page it fills the fixed page height. */
-.cover.cover-has-image{ padding:0; }
-.cover-image{ width:100%; height:auto; object-fit:contain; display:block; }
-.page-cover .page-body > .cover.cover-has-image,
-.page-cover .page-body > .cover.cover-has-image .cover-image{ height:100%; }
+/* ===== Cover with image (image + text together) ===== */
+.cover-image{ display:block; }
+.fit-cover .cover-image{ object-fit:cover; }
+.fit-contain .cover-image{ object-fit:contain; }
+
+/* Background: image fills the cover, text overlaid. An aspect-ratio gives the cover a
+   definite height in contexts without one (rail thumbnail, board, manual blocks); the
+   auto-mode cover page (used by Print) overrides it to fill the real page height. */
+.cover.cover-bg{ position:relative; padding:0; width:100%; aspect-ratio:11 / 17; height:auto; }
+.page-cover .page-body > .cover.cover-bg{ aspect-ratio:auto; height:100%; }
+.cover-bg > .cover-image{ position:absolute; inset:0; width:100%; height:100%; }
+.cover-bg .cover-textwrap{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; padding:.25in; }
+.cover-bg.textpos-top .cover-textwrap{ justify-content:flex-start; }
+.cover-bg.textpos-center .cover-textwrap{ justify-content:center; }
+.cover-bg.textpos-bottom .cover-textwrap{ justify-content:flex-end; }
+.cover-bg .cover-text{ max-width:92%; text-align:center; }
+
+/* Stack: image band above or below the text (band height is absolute inches). */
+.cover.cover-stack{ display:flex; flex-direction:column; padding:0; width:100%; height:100%; }
+.cover-band{ width:100%; overflow:hidden; flex:0 0 auto; }
+.cover-band .cover-image{ width:100%; height:100%; }
+.cover-stack .cover-text{ flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; padding:.25in .2in; text-align:center; }
+
+/* Scrim panel behind text (readability over the image). */
+.cover-text.scrim-light{ background:rgba(255,255,255,.85); border-radius:8px; padding:.16in .2in; }
+.cover-text.scrim-dark{ background:rgba(15,23,42,.62); border-radius:8px; padding:.16in .2in; color:#fff; }
+.cover-text.scrim-dark .cover-kicker,
+.cover-text.scrim-dark .cover-credits,
+.cover-text.scrim-dark .cover-foot,
+.cover-text.scrim-dark .cover-license{ color:#f1f5f9; }
 
 /* Content blocks */
 .block{ break-inside:avoid; }

@@ -101,30 +101,53 @@ const qrTile = (q) => `
     </div>
   </div>`;
 
+// Cover text block (kicker / title / credits / foot), shared by every cover layout.
+function coverText(m) {
+  return `
+    ${m.subtitle ? `<div class="cover-kicker">${esc(m.subtitle)}</div>` : ''}
+    <h1 class="cover-title">${esc(m.title)}</h1>
+    <div class="cover-credits">
+      ${m.book ? `<div>Book by ${esc(m.book)}</div>` : ''}
+      ${m.music ? `<div>Music by ${esc(m.music)}</div>` : ''}
+      ${m.lyrics ? `<div>Lyrics by ${esc(m.lyrics)}</div>` : ''}
+      ${m.director ? `<div>Directed by ${esc(m.director)}</div>` : ''}
+    </div>
+    <div class="cover-foot">
+      ${m.venue ? `<div>${esc(m.venue)}</div>` : ''}
+      ${m.dates ? `<div>${esc(m.dates)}</div>` : ''}
+      ${m.licensing ? `<div class="cover-license">${esc(m.licensing)}</div>` : ''}
+    </div>`;
+}
+
+// Cover markup: plain text cover, or image + text via the chosen layout.
+function coverMarkup(m) {
+  const text = coverText(m);
+  if (!m.coverImage) return `<div class="cover">${text}</div>`;
+
+  const fit = m.coverFit === 'contain' ? 'contain' : 'cover';
+  const scrim = ['light', 'dark'].includes(m.coverScrim) ? m.coverScrim : 'off';
+  const img = `<img class="cover-image" src="${attr(m.coverImage)}" alt="">`;
+  const textBlock = `<div class="cover-text scrim-${scrim}">${text}</div>`;
+
+  if (m.coverLayout === 'top' || m.coverLayout === 'bottom') {
+    const h = parseFloat(m.coverImageHeight) || 3;
+    const band = `<div class="cover-band fit-${fit}" style="height:${h}in">${img}</div>`;
+    const parts = m.coverLayout === 'top' ? band + textBlock : textBlock + band;
+    return `<div class="cover cover-stack layout-${m.coverLayout}">${parts}</div>`;
+  }
+
+  // background: image fills the cover, text overlaid at the chosen vertical position
+  const pos = ['top', 'center', 'bottom'].includes(m.coverTextPos) ? m.coverTextPos : 'center';
+  return `<div class="cover cover-bg fit-${fit} textpos-${pos}">${img}
+    <div class="cover-textwrap">${textBlock}</div></div>`;
+}
+
 /* ---------- whole-section card HTML (Assembly Board + per-card export) ---------- */
 function sectionInnerHTML(id, doc) {
   const m = doc.meta;
   switch (id) {
     case 'cover':
-      if (m.coverImage) {
-        return `<div class="cover cover-has-image"><img class="cover-image" src="${attr(m.coverImage)}" alt=""></div>`;
-      }
-      return `
-        <div class="cover">
-          ${m.subtitle ? `<div class="cover-kicker">${esc(m.subtitle)}</div>` : ''}
-          <h1 class="cover-title">${esc(m.title)}</h1>
-          <div class="cover-credits">
-            ${m.book ? `<div>Book by ${esc(m.book)}</div>` : ''}
-            ${m.music ? `<div>Music by ${esc(m.music)}</div>` : ''}
-            ${m.lyrics ? `<div>Lyrics by ${esc(m.lyrics)}</div>` : ''}
-            ${m.director ? `<div>Directed by ${esc(m.director)}</div>` : ''}
-          </div>
-          <div class="cover-foot">
-            ${m.venue ? `<div>${esc(m.venue)}</div>` : ''}
-            ${m.dates ? `<div>${esc(m.dates)}</div>` : ''}
-            ${m.licensing ? `<div class="cover-license">${esc(m.licensing)}</div>` : ''}
-          </div>
-        </div>`;
+      return coverMarkup(m);
     case 'cast':    return sectionHead('Cast') + `<div>${doc.cast.map(castRow).join('')}</div>`;
     case 'songs':   return sectionHead('Musical Numbers') + `<div class="scene-list">${doc.songs.map(songRow).join('')}</div>`;
     case 'creative':return sectionHead('Creative Team') + `<div>${doc.creative.filter(r => r.name || r.role).map(roleRow).join('')}</div>`;

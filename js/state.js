@@ -9,9 +9,14 @@ function blankDoc() {
     meta: {
       title: 'Your Show Title',
       subtitle: '',
-      // Optional cover image (URL, images/… path, or uploaded data URL). When set it
-      // replaces the generated text cover.
+      // Optional cover image (URL, images/… path, or uploaded data URL) combined with the
+      // cover text via these controls.
       coverImage: '',
+      coverLayout: 'background', // background | top | bottom
+      coverFit: 'cover',         // cover (fill/crop) | contain (fit/no crop)
+      coverTextPos: 'center',    // background layout: top | center | bottom
+      coverImageHeight: '3',     // top/bottom layout: image band height in inches
+      coverScrim: 'off',         // panel behind text: off | light | dark
       licensing: '',
       book: '',
       music: '',
