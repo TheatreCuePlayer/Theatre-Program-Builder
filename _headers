@@ -4,3 +4,15 @@
   X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
+
+# Cache-busting: force the browser to revalidate app code/markup on every load, so a new
+# Cloudflare deploy is picked up immediately (unchanged files still get a cheap 304).
+# This covers the relative module imports a ?v= query string can't reach without a build.
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+/js/*
+  Cache-Control: no-cache
+/css/*
+  Cache-Control: no-cache
