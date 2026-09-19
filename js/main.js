@@ -645,14 +645,14 @@ function syncToolbar() {
 
 /* ----------------------------- print ----------------------------- */
 function doPrint() {
-  // Print always flows from the AUTO reading-order pages (even while editing on the board),
-  // then imposes them into booklet order for half-sheets.
+  // Print reflects the current layout: Auto flows the reading-order pages; Assembly Board
+  // (manual) prints exactly the pages/sections you arranged. Half-sheets are then imposed
+  // into booklet order.
   const printStage = document.createElement('div');
-  const forPrint = { ...State.doc, options: { ...State.doc.options, layoutMode: 'auto' } };
   document.body.appendChild(printStage);
   printStage.style.position = 'absolute';
   printStage.style.left = '-99999px';
-  paginate(printStage, forPrint);
+  paginate(printStage, State.doc);
 
   // Match @page to the physical sheet: half = landscape 11x8.5 (2-up), full = portrait 8.5x11.
   let pageStyle = document.getElementById('page-style');
