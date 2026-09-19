@@ -70,11 +70,15 @@ function imageField(path, value, ph) {
 
 const optSel = (v, cur, label) => `<option value="${v}"${String(cur) === String(v) ? ' selected' : ''}>${label}</option>`;
 
-// Editable printed heading for a section. Empty shows the default as placeholder.
-function headingField(id, headings) {
+// Per-section meta: "Include in program" toggle + editable printed heading.
+function headingField(id, headings, shown) {
   const val = (headings && headings[id]) || '';
-  return `<label class="fld-wrap heading-fld"><span class="fld-label">Printed heading</span>
-    <input data-path="headings.${id}" value="${escAttr(val)}" class="fld" placeholder="${escAttr(DEFAULT_HEADINGS[id] || '')}"></label>`;
+  const included = !shown || shown[id] !== false;
+  return `<div class="section-meta">
+    <label class="fld-inline sec-include"><input type="checkbox" data-path="shown.${id}" ${included ? 'checked' : ''}> Include in printed program</label>
+    <label class="fld-wrap"><span class="fld-label">Printed heading</span>
+      <input data-path="headings.${id}" value="${escAttr(val)}" class="fld" placeholder="${escAttr(DEFAULT_HEADINGS[id] || '')}"></label>
+  </div>`;
 }
 
 // Page margins (inches) — global, lives in the Typography panel.
@@ -146,7 +150,7 @@ function listBlock(title, key, rows, cols, opts = {}) {
       </div>` : '';
     return `<div class="list-row ${opts.stacked ? 'stacked' : ''}">${reorder}<div class="row-fields">${inputs}</div><button class="row-del" data-del="${key}" data-i="${i}" title="Remove">✕</button></div>`;
   }).join('');
-  const head = DEFAULT_HEADINGS[key] ? headingField(key, opts.headings) : '';
+  const head = DEFAULT_HEADINGS[key] ? headingField(key, opts.headings, opts.shown) : '';
   return detailsGroup(key, title, head + (opts.controls || '') + body, addBtn);
 }
 
@@ -231,7 +235,7 @@ function renderForm() {
     ${imageField('meta.coverImage', m.coverImage, 'Cover image URL, images/…, or upload →')}
     ${coverOptionsHTML(m)}
     <div class="grp-sub">Director's Note</div>
-    ${headingField('directorNote', d.headings)}
+    ${headingField('directorNote', d.headings, d.shown)}
     ${field('directorNote.text', 'Note', d.directorNote.text, 'textarea')}
     ${field('directorNote.by', 'Signed by', d.directorNote.by)}`;
 
@@ -240,31 +244,31 @@ function renderForm() {
       `<button class="row-add" data-tyreset title="Clear styles for the current scope">Reset</button>`)}
     ${detailsGroup('showinfo', 'Show Info', showInfoBody)}
     ${listBlock('Cast List (no photos)', 'cast', d.cast, [
-      { k: 'character', ph: 'Character' }, { k: 'performer', ph: 'Performer' }], { reorder: true, headings: d.headings })}
+      { k: 'character', ph: 'Character' }, { k: 'performer', ph: 'Performer' }], { reorder: true, headings: d.headings, shown: d.shown })}
     ${listBlock('Musical Numbers / Songs', 'songs', d.songs, [
-      { k: 'act', ph: 'Act / group' }, { k: 'title', ph: 'Song / scene title' }, { k: 'note', ph: 'Note (who sings)' }], { reorder: true, headings: d.headings })}
+      { k: 'act', ph: 'Act / group' }, { k: 'title', ph: 'Song / scene title' }, { k: 'note', ph: 'Note (who sings)' }], { reorder: true, headings: d.headings, shown: d.shown })}
     ${listBlock("Who's Who (photos + bios · everyone)", 'whoswho', d.whoswho, [
       { k: 'name', ph: 'Name' }, { k: 'credit', ph: 'Role / character' },
       { k: 'photo', ph: 'Photo URL or images/name.jpg', render: (p, v) => imageField(p, v, 'Photo URL, images/name.jpg, or upload →') },
       { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
-      { reorder: true, stacked: true, headings: d.headings, controls: whoswhoControls(d.options) })}
+      { reorder: true, stacked: true, headings: d.headings, shown: d.shown, controls: whoswhoControls(d.options) })}
     ${listBlock('Creative Team', 'creative', d.creative, [
-      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true, headings: d.headings })}
+      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true, headings: d.headings, shown: d.shown })}
     ${listBlock('Management', 'management', d.management, [
-      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true, headings: d.headings })}
+      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true, headings: d.headings, shown: d.shown })}
     ${listBlock('Production Crew (one category, many names)', 'crew', d.crew, [
       { k: 'category', ph: 'Category (e.g. Scenery Construction)' },
       { k: 'names', ph: 'Names — one per line, or comma-separated', type: 'textarea', rows: 3 }],
-      { stacked: true, reorder: true, headings: d.headings })}
+      { stacked: true, reorder: true, headings: d.headings, shown: d.shown })}
     ${detailsGroup('productionNotes', 'Production Notes',
-      headingField('productionNotes', d.headings) + field('productionNotes', '', d.productionNotes, 'textarea'))}
+      headingField('productionNotes', d.headings, d.shown) + field('productionNotes', '', d.productionNotes, 'textarea'))}
     ${detailsGroup('acknowledgments', 'Acknowledgments (back)',
-      headingField('acknowledgments', d.headings) + field('acknowledgments', '', d.acknowledgments, 'textarea'))}
+      headingField('acknowledgments', d.headings, d.shown) + field('acknowledgments', '', d.acknowledgments, 'textarea'))}
     ${detailsGroup('backPage', 'Back Page',
-      headingField('backPage', d.headings) + field('backPage', '', d.backPage, 'textarea'))}
+      headingField('backPage', d.headings, d.shown) + field('backPage', '', d.backPage, 'textarea'))}
     ${listBlock('QR Codes', 'qr', d.qr, [
       { k: 'label', ph: 'Label (e.g. Donate)' }, { k: 'url', ph: 'Link (https://…)' },
-      { k: 'caption', ph: 'Caption (optional)' }], { stacked: true, reorder: true, headings: d.headings })}
+      { k: 'caption', ph: 'Caption (optional)' }], { stacked: true, reorder: true, headings: d.headings, shown: d.shown })}
     ${customBlock(d.custom)}`;
   initCollapsibles();
   initTypographyPanel();

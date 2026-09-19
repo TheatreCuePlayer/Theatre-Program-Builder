@@ -286,9 +286,21 @@ function buildBlocks(doc) {
   list('qr', 'back', headingText(doc, 'qr'), doc.qr.filter(q => q.url || q.label), qrTile);
   prose('backPage', 'back', headingText(doc, 'backPage'), doc.backPage);
 
-  return blocks;
+  // Drop sections the user excluded from the printed program (Include toggle). "Who's Who
+  // only" mode always keeps Who's Who so the standalone insert still works.
+  const wwOnly = doc.options && doc.options.whoswhoOnly;
+  return blocks.filter(b => {
+    const id = b.el.dataset.section;
+    if (wwOnly && id === 'whoswho') return true;
+    return sectionShown(doc, id);
+  });
+}
+
+// A section prints unless explicitly excluded (doc.shown[id] === false).
+function sectionShown(doc, id) {
+  return !doc.shown || doc.shown[id] !== false;
 }
 
 const coverHTML = (doc) => sectionInnerHTML('cover', doc);
 
-export { SECTIONS, buildCards, buildBlocks, coverHTML, sectionInnerHTML, hasContent, esc, DEFAULT_HEADINGS, headingText };
+export { SECTIONS, buildCards, buildBlocks, coverHTML, sectionInnerHTML, hasContent, esc, DEFAULT_HEADINGS, headingText, sectionShown };

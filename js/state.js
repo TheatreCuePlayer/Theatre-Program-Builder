@@ -49,6 +49,8 @@ function blankDoc() {
     backPage: '',
     // Custom printed section headings (id -> text). Empty/missing = use the default.
     headings: {},
+    // Which sections are included in the printed program (id -> false to exclude).
+    shown: {},
     // User-added sections (images / text boxes). Each is its own board card.
     // { id, type:'image', title, url, caption, size, heading }
     // { id, type:'text',  title, heading, body }
@@ -165,6 +167,7 @@ function migrate(d) {
     backPage: str(d.backPage) || str(d.notes),
     custom: arr(d.custom, []),
     headings: (d.headings && typeof d.headings === 'object') ? d.headings : {},
+    shown: (d.shown && typeof d.shown === 'object') ? d.shown : {},
     styles: migrateStyles(d.styles),
     options: Object.assign(base.options, d.options || {}),
     manual: Array.isArray(d.manual) ? d.manual : null,
