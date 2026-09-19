@@ -12,11 +12,14 @@ function blankDoc() {
       // Optional cover image (URL, images/… path, or uploaded data URL) combined with the
       // cover text via these controls.
       coverImage: '',
-      coverLayout: 'background', // background | top | bottom
+      coverLayout: 'background', // background | top | bottom | free
       coverFit: 'cover',         // cover (fill/crop) | contain (fit/no crop)
       coverTextPos: 'center',    // background layout: top | center | bottom
       coverImageHeight: '3',     // top/bottom layout: image band height in inches
       coverScrim: 'off',         // panel behind text: off | light | dark
+      // free layout: image box as fractions of the cover (x,y = top-left; w = width).
+      // Height follows the image's aspect ratio. Drag/resize on the cover preview.
+      coverImageBox: { x: 0.32, y: 0.08, w: 0.36 },
       licensing: '',
       book: '',
       music: '',

@@ -77,6 +77,7 @@ function coverOptionsHTML(m) {
   return `<div class="cover-opts">
     <label class="fld-inline">Layout
       <select data-path="meta.coverLayout" class="fld">
+        ${optSel('free', m.coverLayout, 'Free (drag & resize)')}
         ${optSel('background', m.coverLayout, 'Image behind text')}
         ${optSel('top', m.coverLayout, 'Image on top')}
         ${optSel('bottom', m.coverLayout, 'Image on bottom')}
@@ -102,7 +103,7 @@ function coverOptionsHTML(m) {
         ${optSel('light', m.coverScrim, 'Light')}
         ${optSel('dark', m.coverScrim, 'Dark')}
       </select></label>
-    <div class="empty-hint"><b>Text position</b> applies to “Image behind text”. <b>Image height</b> applies to “on top / on bottom”.</div>
+    <div class="empty-hint"><b>Free</b>: drag the image on the cover; use the corner dot to resize. <b>Text position</b> applies to “Image behind text”; <b>Image height</b> to “on top / on bottom”.</div>
   </div>`;
 }
 
@@ -438,7 +439,64 @@ function refreshPreview() {
     boardEl.classList.add('hidden');
     previewWrap.classList.remove('hidden');
     paginate(stage, State.doc);
+    attachCoverInteractions();
   }
+}
+
+// Free-layout cover: drag the image box to move, drag the corner dot to resize.
+// Positions are committed as fractions of the cover so they print true to the preview.
+function attachCoverInteractions() {
+  const m = State.doc.meta;
+  if (m.coverLayout !== 'free' || !m.coverImage) return;
+  const cover = stage.querySelector('.page-cover .cover-free');
+  if (!cover) return;
+  const box = cover.querySelector('.cover-imgbox');
+  const handle = cover.querySelector('.cover-resize');
+  if (!box || !handle) return;
+
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  const commit = () => State.update(d => {
+    d.meta.coverImageBox = {
+      x: parseFloat(box.style.left) / 100,
+      y: parseFloat(box.style.top) / 100,
+      w: parseFloat(box.style.width) / 100,
+    };
+  });
+
+  const startDrag = (e) => {
+    if (e.target === handle) return; // resize is separate
+    e.preventDefault();
+    const rect = cover.getBoundingClientRect();
+    const ox = e.clientX, oy = e.clientY;
+    const bx = parseFloat(box.style.left) / 100, by = parseFloat(box.style.top) / 100;
+    box.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      const wFrac = parseFloat(box.style.width) / 100;
+      const hFrac = box.offsetHeight / rect.height;
+      box.style.left = clamp(bx + (ev.clientX - ox) / rect.width, 0, 1 - wFrac) * 100 + '%';
+      box.style.top = clamp(by + (ev.clientY - oy) / rect.height, 0, 1 - hFrac) * 100 + '%';
+    };
+    const up = () => { box.removeEventListener('pointermove', move); box.removeEventListener('pointerup', up); commit(); };
+    box.addEventListener('pointermove', move);
+    box.addEventListener('pointerup', up);
+  };
+
+  const startResize = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const rect = cover.getBoundingClientRect();
+    const x0 = parseFloat(box.style.left) / 100;
+    handle.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      const w = clamp((ev.clientX - rect.left) / rect.width - x0, 0.08, 1 - x0);
+      box.style.width = w * 100 + '%';
+    };
+    const up = () => { handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', up); commit(); };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+  };
+
+  box.addEventListener('pointerdown', startDrag);
+  handle.addEventListener('pointerdown', startResize);
 }
 
 function refreshCards() {

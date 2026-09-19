@@ -129,6 +129,16 @@ function coverMarkup(m) {
   const img = `<img class="cover-image" src="${attr(m.coverImage)}" alt="">`;
   const textBlock = `<div class="cover-text scrim-${scrim}">${text}</div>`;
 
+  // Free: a movable/resizable image frame over the centered text (drag/resize wired in main.js).
+  if (m.coverLayout === 'free') {
+    const b = m.coverImageBox || { x: 0.32, y: 0.08, w: 0.36 };
+    const style = `left:${(b.x * 100)}%;top:${(b.y * 100)}%;width:${(b.w * 100)}%`;
+    return `<div class="cover cover-free">
+      <div class="cover-text cover-free-text scrim-${scrim}">${text}</div>
+      <div class="cover-imgbox" style="${style}">${img}<span class="cover-resize" data-resize></span></div>
+    </div>`;
+  }
+
   if (m.coverLayout === 'top' || m.coverLayout === 'bottom') {
     const h = parseFloat(m.coverImageHeight) || 3;
     const band = `<div class="cover-band fit-${fit}" style="height:${h}in">${img}</div>`;

@@ -122,6 +122,17 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 .cover-band .cover-image{ width:100%; height:100%; }
 .cover-stack .cover-text{ flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; padding:.25in .2in; text-align:center; }
 
+/* Free: movable/resizable image frame over the centered text. */
+.cover.cover-free{ position:relative; padding:0; display:block; }
+.cover-free-text{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:.2in; }
+.cover-imgbox{ position:absolute; }
+.cover-imgbox .cover-image{ width:100%; height:auto; display:block; -webkit-user-drag:none; user-drag:none; pointer-events:none; }
+.cover-resize{ display:none; }
+/* Only the live preview stage is editable: show the frame outline + resize dot there. */
+#stage .cover-free{ touch-action:none; }
+#stage .cover-imgbox{ outline:1.5px dashed rgba(124,58,237,.7); outline-offset:2px; cursor:move; }
+#stage .cover-resize{ display:block; position:absolute; right:-7px; bottom:-7px; width:14px; height:14px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.3); cursor:nwse-resize; }
+
 /* Scrim panel behind text (readability over the image). */
 .cover-text.scrim-light{ background:rgba(255,255,255,.85); border-radius:8px; padding:.16in .2in; }
 .cover-text.scrim-dark{ background:rgba(15,23,42,.62); border-radius:8px; padding:.16in .2in; color:#fff; }
