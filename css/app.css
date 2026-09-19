@@ -7,6 +7,9 @@
 *{ box-sizing:border-box; }
 body{ font-family:var(--sans); margin:0; }
 
+/* build/deploy stamp under the app title (never printed) */
+.build-stamp{ font-size:10px; color:var(--muted); line-height:1.2; margin-top:1px; white-space:nowrap; }
+
 /* ---- segmented toggles & buttons ---- */
 .seg{ display:inline-flex; background:#f1f5f9; border:1px solid var(--line); border-radius:8px; padding:2px; }
 .seg-btn{ font-size:12px; padding:5px 10px; border-radius:6px; color:var(--muted); border:0; background:transparent; cursor:pointer; white-space:nowrap; }
