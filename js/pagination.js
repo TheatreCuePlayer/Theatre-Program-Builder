@@ -63,19 +63,26 @@ function flow(stage, doc, blocks, startKind) {
 function paginateAuto(stage, doc) {
   stage.innerHTML = '';
 
-  const cover = newPage(doc, 'cover');
-  cover.body.dataset.section = 'cover'; // per-section typography hook
-  cover.body.innerHTML = coverHTML(doc);
-  stage.appendChild(cover.page);
+  // "Who's Who only" mode: no cover, no other sections — just the flowing Who's Who,
+  // so it can fill the pages of a standalone (reusable) insert.
+  const wwOnly = doc.options.whoswhoOnly;
 
-  const blocks = buildBlocks(doc);
+  if (!wwOnly) {
+    const cover = newPage(doc, 'cover');
+    cover.body.dataset.section = 'cover'; // per-section typography hook
+    cover.body.innerHTML = coverHTML(doc);
+    stage.appendChild(cover.page);
+  }
+
+  let blocks = buildBlocks(doc);
+  if (wwOnly) blocks = blocks.filter(b => b.el.dataset.section === 'whoswho');
   const inner = blocks.filter(b => b.zone === 'inner');
   const back = blocks.filter(b => b.zone === 'back');
 
   if (inner.length) flow(stage, doc, inner);
   if (back.length) flow(stage, doc, back, 'back'); // back zone forced onto fresh page(s)
 
-  numberPages(stage);
+  if (!wwOnly) numberPages(stage); // a standalone insert prints without page numbers
   return stage.querySelectorAll('.page').length;
 }
 
@@ -126,6 +133,8 @@ function numberPages(stage) {
 }
 
 function paginate(stage, doc) {
+  // "Who's Who only" always flows via auto (the board can't spill one card across pages).
+  if (doc.options.whoswhoOnly) return paginateAuto(stage, doc);
   return doc.options.layoutMode === 'manual'
     ? paginateManual(stage, doc)
     : paginateAuto(stage, doc);

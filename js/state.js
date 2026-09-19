@@ -53,7 +53,7 @@ function blankDoc() {
     custom: [],
     // Per-role + per-section typography (fonts, weight, italic, size, alignment).
     styles: blankStyles(),
-    options: { size: 'half', layoutMode: 'auto' },
+    options: { size: 'half', layoutMode: 'auto', wwPhotoW: 1, whoswhoOnly: false },
     manual: null,
   };
 }

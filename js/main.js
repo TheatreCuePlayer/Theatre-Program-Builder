@@ -122,7 +122,21 @@ function listBlock(title, key, rows, cols, opts = {}) {
       </div>` : '';
     return `<div class="list-row ${opts.stacked ? 'stacked' : ''}">${reorder}<div class="row-fields">${inputs}</div><button class="row-del" data-del="${key}" data-i="${i}" title="Remove">✕</button></div>`;
   }).join('');
-  return detailsGroup(key, title, body, addBtn);
+  return detailsGroup(key, title, (opts.controls || '') + body, addBtn);
+}
+
+// Who's Who options: uniform photo size + "Who's Who only" output mode.
+function whoswhoControls(o) {
+  const w = (+(o.wwPhotoW || 1)).toFixed(2);
+  return `<div class="ww-ctrls">
+    <label class="fld-inline">Photo size
+      <input type="range" data-path="options.wwPhotoW" min="0.6" max="2.2" step="0.05" value="${w}"
+        oninput="this.nextElementSibling.textContent=(+this.value).toFixed(2)+' in'">
+      <span class="ww-size-val">${w} in</span></label>
+    <label class="fld-inline ww-only">
+      <input type="checkbox" data-path="options.whoswhoOnly" ${o.whoswhoOnly ? 'checked' : ''}>
+      Who's Who only — hide cover &amp; other sections (fills the pages)</label>
+  </div>`;
 }
 
 // Custom sections (images / text boxes) — variable count, per-type fields, reorderable.
@@ -200,7 +214,7 @@ function renderForm() {
       { k: 'name', ph: 'Name' }, { k: 'credit', ph: 'Role / character' },
       { k: 'photo', ph: 'Photo URL or images/name.jpg', render: (p, v) => imageField(p, v, 'Photo URL, images/name.jpg, or upload →') },
       { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
-      { reorder: true, stacked: true })}
+      { reorder: true, stacked: true, controls: whoswhoControls(d.options) })}
     ${listBlock('Creative Team', 'creative', d.creative, [
       { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true })}
     ${listBlock('Management', 'management', d.management, [
@@ -373,7 +387,9 @@ const rowTemplate = {
 $('#sidebar').addEventListener('input', (e) => {
   const path = e.target.dataset.path;
   if (!path) return;
-  setPath(State.doc, path, e.target.value);
+  const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  setPath(State.doc, path, val);
+  // A checkbox that changes layout (e.g. Who's Who only) must rebuild the board/stage split.
   State.emit(); // save + re-render preview/cards (form is left intact so the caret stays put)
 });
 
@@ -433,7 +449,8 @@ $('#sidebar').addEventListener('click', (e) => {
 /* ----------------------------- preview / board ----------------------------- */
 function refreshPreview() {
   stage.dataset.mode = State.doc.options.layoutMode; // gates in-preview edit handles
-  if (State.doc.options.layoutMode === 'manual') {
+  // The Assembly Board is bypassed in "Who's Who only" mode (that flows via auto).
+  if (State.doc.options.layoutMode === 'manual' && !State.doc.options.whoswhoOnly) {
     previewWrap.classList.add('hidden');
     boardEl.classList.remove('hidden');
     renderBoard(boardEl, State.doc);
@@ -591,6 +608,12 @@ async function guardExport(fn) {
 // Inject the typography <style>/<link>; when the font set changed, re-measure once the
 // webfonts finish loading so auto-pagination reflects their real metrics.
 function applyAndReflow() {
+  // Uniform Who's Who photo size (portrait 4:5), applied via CSS vars so it reaches the
+  // preview, print, and card export together.
+  const w = parseFloat(State.doc.options.wwPhotoW) || 1;
+  document.documentElement.style.setProperty('--ww-w', w + 'in');
+  document.documentElement.style.setProperty('--ww-h', (w * 1.25) + 'in');
+
   const fontsChanged = applyTypography(State.doc);
   if (fontsChanged && document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => refreshPreview());
