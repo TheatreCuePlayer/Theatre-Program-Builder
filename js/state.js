@@ -47,6 +47,8 @@ function blankDoc() {
     productionNotes: '',
     acknowledgments: '',
     backPage: '',
+    // Custom printed section headings (id -> text). Empty/missing = use the default.
+    headings: {},
     // User-added sections (images / text boxes). Each is its own board card.
     // { id, type:'image', title, url, caption, size, heading }
     // { id, type:'text',  title, heading, body }
@@ -161,6 +163,7 @@ function migrate(d) {
     acknowledgments: str(d.acknowledgments),
     backPage: str(d.backPage) || str(d.notes),
     custom: arr(d.custom, []),
+    headings: (d.headings && typeof d.headings === 'object') ? d.headings : {},
     styles: migrateStyles(d.styles),
     options: Object.assign(base.options, d.options || {}),
     manual: Array.isArray(d.manual) ? d.manual : null,

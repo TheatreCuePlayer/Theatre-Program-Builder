@@ -23,6 +23,26 @@ const SECTIONS = [
 
 const sectionHead = (t) => `<h2 class="section-head">${esc(t)}</h2>`;
 
+// Default printed headings per section. Users can override any of these (doc.headings[id]),
+// e.g. "Who's Who" -> "Who's Who in Blinn College – Brenham Theatre".
+const DEFAULT_HEADINGS = {
+  directorNote: "Director's Note",
+  cast: 'Cast',
+  songs: 'Musical Numbers',
+  whoswho: "Who's Who",
+  creative: 'Creative Team',
+  management: 'Management',
+  crew: 'Production Crew',
+  productionNotes: 'Production Notes',
+  acknowledgments: 'Acknowledgments',
+  qr: 'Scan for More',
+  backPage: 'Back Page',
+};
+function headingText(doc, id) {
+  const h = doc && doc.headings && doc.headings[id];
+  return (typeof h === 'string' && h.trim()) ? h : DEFAULT_HEADINGS[id];
+}
+
 // Linked photo (URL/path). Fixed CSS box keeps pagination height deterministic even
 // before/without the image loading. crossorigin lets CORS-enabled hosts export cleanly.
 function photo(url, cls) {
@@ -166,17 +186,17 @@ function sectionInnerHTML(id, doc) {
   switch (id) {
     case 'cover':
       return coverMarkup(m);
-    case 'cast':    return sectionHead('Cast') + `<div>${doc.cast.map(castRow).join('')}</div>`;
-    case 'songs':   return sectionHead('Musical Numbers') + `<div class="scene-list">${doc.songs.map(songRow).join('')}</div>`;
-    case 'creative':return sectionHead('Creative Team') + `<div>${doc.creative.filter(r => r.name || r.role).map(roleRow).join('')}</div>`;
-    case 'management':return sectionHead('Management') + `<div>${doc.management.filter(r => r.name || r.role).map(roleRow).join('')}</div>`;
-    case 'crew':    return sectionHead('Production Crew') + `<div class="crew-list">${doc.crew.filter(c => c.category || c.names).map(crewRow).join('')}</div>`;
-    case 'whoswho': return sectionHead("Who's Who") + `<div class="ww-list">${doc.whoswho.filter(b => b.name || b.bio).map(wwRow).join('')}</div>`;
-    case 'qr':      return sectionHead('Scan for More') + `<div class="qr-grid">${doc.qr.filter(q => q.url || q.label).map(qrTile).join('')}</div>`;
-    case 'directorNote': return sectionHead("Director's Note") + `<div class="prose">${nl2br(doc.directorNote.text)}</div>${doc.directorNote.by ? `<div class="note-by">— ${esc(doc.directorNote.by)}</div>` : ''}`;
-    case 'productionNotes': return sectionHead('Production Notes') + `<div class="prose">${nl2br(doc.productionNotes)}</div>`;
-    case 'acknowledgments': return sectionHead('Acknowledgments') + `<div class="prose">${nl2br(doc.acknowledgments)}</div>`;
-    case 'backPage': return sectionHead('Back Page') + `<div class="prose">${nl2br(doc.backPage)}</div>`;
+    case 'cast':    return sectionHead(headingText(doc, 'cast')) + `<div>${doc.cast.map(castRow).join('')}</div>`;
+    case 'songs':   return sectionHead(headingText(doc, 'songs')) + `<div class="scene-list">${doc.songs.map(songRow).join('')}</div>`;
+    case 'creative':return sectionHead(headingText(doc, 'creative')) + `<div>${doc.creative.filter(r => r.name || r.role).map(roleRow).join('')}</div>`;
+    case 'management':return sectionHead(headingText(doc, 'management')) + `<div>${doc.management.filter(r => r.name || r.role).map(roleRow).join('')}</div>`;
+    case 'crew':    return sectionHead(headingText(doc, 'crew')) + `<div class="crew-list">${doc.crew.filter(c => c.category || c.names).map(crewRow).join('')}</div>`;
+    case 'whoswho': return sectionHead(headingText(doc, 'whoswho')) + `<div class="ww-list">${doc.whoswho.filter(b => b.name || b.bio).map(wwRow).join('')}</div>`;
+    case 'qr':      return sectionHead(headingText(doc, 'qr')) + `<div class="qr-grid">${doc.qr.filter(q => q.url || q.label).map(qrTile).join('')}</div>`;
+    case 'directorNote': return sectionHead(headingText(doc, 'directorNote')) + `<div class="prose">${nl2br(doc.directorNote.text)}</div>${doc.directorNote.by ? `<div class="note-by">— ${esc(doc.directorNote.by)}</div>` : ''}`;
+    case 'productionNotes': return sectionHead(headingText(doc, 'productionNotes')) + `<div class="prose">${nl2br(doc.productionNotes)}</div>`;
+    case 'acknowledgments': return sectionHead(headingText(doc, 'acknowledgments')) + `<div class="prose">${nl2br(doc.acknowledgments)}</div>`;
+    case 'backPage': return sectionHead(headingText(doc, 'backPage')) + `<div class="prose">${nl2br(doc.backPage)}</div>`;
   }
   return '';
 }
@@ -242,14 +262,14 @@ function buildBlocks(doc) {
   };
 
   // Reading order mirrors SECTIONS.
-  prose('directorNote', 'inner', "Director's Note", doc.directorNote.text, doc.directorNote.by);
-  list('cast', 'inner', 'Cast', doc.cast.filter(c => c.character || c.performer), castRow);
-  list('songs', 'inner', 'Musical Numbers', doc.songs.filter(s => s.title || s.act), songRow);
-  list('whoswho', 'inner', "Who's Who", doc.whoswho.filter(b => b.name || b.bio || b.photo), wwRow);
-  list('creative', 'inner', 'Creative Team', doc.creative.filter(r => r.name || r.role), roleRow);
-  list('management', 'inner', 'Management', doc.management.filter(r => r.name || r.role), roleRow);
-  list('crew', 'inner', 'Production Crew', doc.crew.filter(c => c.category || c.names), crewRow);
-  prose('productionNotes', 'inner', 'Production Notes', doc.productionNotes);
+  prose('directorNote', 'inner', headingText(doc, 'directorNote'), doc.directorNote.text, doc.directorNote.by);
+  list('cast', 'inner', headingText(doc, 'cast'), doc.cast.filter(c => c.character || c.performer), castRow);
+  list('songs', 'inner', headingText(doc, 'songs'), doc.songs.filter(s => s.title || s.act), songRow);
+  list('whoswho', 'inner', headingText(doc, 'whoswho'), doc.whoswho.filter(b => b.name || b.bio || b.photo), wwRow);
+  list('creative', 'inner', headingText(doc, 'creative'), doc.creative.filter(r => r.name || r.role), roleRow);
+  list('management', 'inner', headingText(doc, 'management'), doc.management.filter(r => r.name || r.role), roleRow);
+  list('crew', 'inner', headingText(doc, 'crew'), doc.crew.filter(c => c.category || c.names), crewRow);
+  prose('productionNotes', 'inner', headingText(doc, 'productionNotes'), doc.productionNotes);
 
   // Custom sections flow at the end of the body in Auto mode; the Assembly Board is
   // how you place each one on a specific page.
@@ -262,13 +282,13 @@ function buildBlocks(doc) {
       push(item.id, 'inner', false, `<div class="prose">${nl2br(item.body)}</div>`);
     }
   });
-  prose('acknowledgments', 'back', 'Acknowledgments', doc.acknowledgments);
-  list('qr', 'back', 'Scan for More', doc.qr.filter(q => q.url || q.label), qrTile);
-  prose('backPage', 'back', 'Back Page', doc.backPage);
+  prose('acknowledgments', 'back', headingText(doc, 'acknowledgments'), doc.acknowledgments);
+  list('qr', 'back', headingText(doc, 'qr'), doc.qr.filter(q => q.url || q.label), qrTile);
+  prose('backPage', 'back', headingText(doc, 'backPage'), doc.backPage);
 
   return blocks;
 }
 
 const coverHTML = (doc) => sectionInnerHTML('cover', doc);
 
-export { SECTIONS, buildCards, buildBlocks, coverHTML, sectionInnerHTML, hasContent, esc };
+export { SECTIONS, buildCards, buildBlocks, coverHTML, sectionInnerHTML, hasContent, esc, DEFAULT_HEADINGS, headingText };
