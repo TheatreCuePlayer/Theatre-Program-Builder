@@ -88,7 +88,7 @@ const SIZE_OPTIONS = [
   { v: '1.25', label: '125%' }, { v: '1.5', label: '150%' }, { v: '2', label: '200%' },
 ];
 
-function emptyStyle() { return { font: '', weight: '', italic: '', size: '', align: '' }; }
+function emptyStyle() { return { font: '', weight: '', italic: '', size: '', align: '', invert: '' }; }
 
 // A fresh, fully-populated styles object (all roles present, no section overrides).
 function blankStyles() {
@@ -132,6 +132,14 @@ function boxDecls(s) {
   if (s.weight) d.push(`font-weight:${s.weight === 'bold' ? '700' : '400'}`);
   if (s.italic) d.push(`font-style:${s.italic === 'italic' ? 'italic' : 'normal'}`);
   if (s.align) d.push(`text-align:${s.align}`);
+  if (s.invert === 'on') {
+    // Inverted "block": white text on a near-black box that hugs the text and wraps per line.
+    d.push('color:#fff', 'background:#111', 'padding:.03in .16in', 'display:inline-block',
+      'border-bottom:0', 'border-radius:2px', '-webkit-box-decoration-break:clone', 'box-decoration-break:clone');
+  } else if (s.invert === 'off') {
+    // Explicitly cancel an inherited invert for this scope.
+    d.push('color:inherit', 'background:transparent', 'padding:0');
+  }
   return d;
 }
 

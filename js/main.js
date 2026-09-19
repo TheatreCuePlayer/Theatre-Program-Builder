@@ -362,6 +362,9 @@ function roleControls(scope, roleKey) {
       ${tySelect(scope, roleKey, 'size', s.size, SIZE_OPTIONS.map(o => [o.v, o.label]), 'Size')}
       ${tySelect(scope, roleKey, 'align', s.align, [['left', 'Left'], ['center', 'Center'], ['right', 'Right'], ['justify', 'Full (justify)']], 'Align')}
     </div>
+    <div class="ty-row">
+      ${tySelect(scope, roleKey, 'invert', s.invert, [['on', 'Block (white on black)'], ['off', 'None']], 'Invert')}
+    </div>
   </div>`;
 }
 
