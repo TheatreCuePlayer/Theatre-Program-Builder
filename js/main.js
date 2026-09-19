@@ -158,6 +158,12 @@ function whoswhoControls(o) {
       <input type="range" data-path="options.wwPhotoW" min="0.6" max="2.2" step="0.05" value="${w}"
         oninput="this.nextElementSibling.textContent=(+this.value).toFixed(2)+' in'">
       <span class="ww-size-val">${w} in</span></label>
+    <label class="fld-inline">Photo crop
+      <select data-path="options.wwPhotoFit" class="fld">
+        ${optSel('top', o.wwPhotoFit, 'Top (keep heads)')}
+        ${optSel('center', o.wwPhotoFit, 'Center')}
+        ${optSel('contain', o.wwPhotoFit, 'Whole photo (no crop)')}
+      </select></label>
     <label class="fld-inline ww-only">
       <input type="checkbox" data-path="options.whoswhoOnly" ${o.whoswhoOnly ? 'checked' : ''}>
       Who's Who only — hide cover &amp; other sections (fills the pages)</label>
@@ -640,6 +646,10 @@ function applyAndReflow() {
   const w = parseFloat(State.doc.options.wwPhotoW) || 1;
   document.documentElement.style.setProperty('--ww-w', w + 'in');
   document.documentElement.style.setProperty('--ww-h', (w * 1.25) + 'in');
+  // Headshot crop: top-align keeps heads (crops from the bottom); contain shows the whole photo.
+  const fit = State.doc.options.wwPhotoFit || 'top';
+  document.documentElement.style.setProperty('--ww-fit', fit === 'contain' ? 'contain' : 'cover');
+  document.documentElement.style.setProperty('--ww-pos', fit === 'center' ? 'center center' : 'center top');
 
   // Page margins (affects the printable area, so pagination re-measures against them).
   const mv = parseFloat(State.doc.options.marginV); const mh = parseFloat(State.doc.options.marginH);

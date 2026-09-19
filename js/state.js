@@ -56,6 +56,7 @@ function blankDoc() {
     // Per-role + per-section typography (fonts, weight, italic, size, alignment).
     styles: blankStyles(),
     options: { size: 'half', layoutMode: 'auto', wwPhotoW: 1, whoswhoOnly: false,
+               wwPhotoFit: 'top', // headshot crop: top | center | contain
                marginV: 0.5, marginH: 0.55 }, // page margins in inches (top/bottom, left/right)
     manual: null,
   };
