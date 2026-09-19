@@ -70,6 +70,23 @@ function imageField(path, value, ph) {
 
 const optSel = (v, cur, label) => `<option value="${v}"${String(cur) === String(v) ? ' selected' : ''}>${label}</option>`;
 
+// Page margins (inches) — global, lives in the Typography panel.
+function pageMarginsHTML(o) {
+  const v = (+(o.marginV ?? 0.5)).toFixed(2);
+  const h = (+(o.marginH ?? 0.55)).toFixed(2);
+  return `<div class="page-margins">
+    <div class="ty-sub">Page margins</div>
+    <label class="fld-inline">Top / bottom
+      <input type="range" data-path="options.marginV" min="0.25" max="1.25" step="0.05" value="${v}"
+        oninput="this.nextElementSibling.textContent=(+this.value).toFixed(2)+' in'">
+      <span class="mgn-val">${v} in</span></label>
+    <label class="fld-inline">Left / right
+      <input type="range" data-path="options.marginH" min="0.25" max="1.25" step="0.05" value="${h}"
+        oninput="this.nextElementSibling.textContent=(+this.value).toFixed(2)+' in'">
+      <span class="mgn-val">${h} in</span></label>
+  </div>`;
+}
+
 // Cover layout controls — shown only once a cover image is set.
 function coverOptionsHTML(m) {
   if (!m.coverImage) return '';
@@ -181,6 +198,7 @@ function renderForm() {
   const d = State.doc;
   const m = d.meta;
   const typographyBody = `
+    ${pageMarginsHTML(d.options)}
     <label class="fld-inline ty-scope-row">Apply to
       <select id="type-scope" class="fld"></select></label>
     <div id="type-controls"></div>`;
@@ -613,6 +631,11 @@ function applyAndReflow() {
   const w = parseFloat(State.doc.options.wwPhotoW) || 1;
   document.documentElement.style.setProperty('--ww-w', w + 'in');
   document.documentElement.style.setProperty('--ww-h', (w * 1.25) + 'in');
+
+  // Page margins (affects the printable area, so pagination re-measures against them).
+  const mv = parseFloat(State.doc.options.marginV); const mh = parseFloat(State.doc.options.marginH);
+  document.documentElement.style.setProperty('--page-mv', (isNaN(mv) ? 0.5 : mv) + 'in');
+  document.documentElement.style.setProperty('--page-mh', (isNaN(mh) ? 0.55 : mh) + 'in');
 
   const fontsChanged = applyTypography(State.doc);
   if (fontsChanged && document.fonts && document.fonts.ready) {

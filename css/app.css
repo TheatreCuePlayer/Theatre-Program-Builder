@@ -80,6 +80,11 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 .ww-ctrls .ww-only input{ margin-top:1px; }
 
 /* ---- typography panel ---- */
+.page-margins{ display:flex; flex-direction:column; gap:7px; margin-bottom:10px; padding:8px; border:1px solid var(--line); border-radius:8px; background:#f8fafc; }
+.page-margins .fld-inline{ gap:8px; }
+.page-margins input[type="range"]{ flex:1; min-width:0; }
+.ty-sub{ font-size:11px; font-weight:700; color:var(--ink); }
+.mgn-val{ font-variant-numeric:tabular-nums; min-width:44px; text-align:right; }
 .ty-scope-row{ width:100%; margin-bottom:8px; }
 .ty-scope-row select.fld{ flex:1; width:auto; }
 .ty-role{ border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; }
@@ -98,7 +103,7 @@ summary.grp-head:hover .grp-title{ color:var(--ink); }
 /* NB: 'pg-*' not 'size-*' — Tailwind CDN ships a `size-full` utility that would clobber ours. */
 .pg-half{ width:5.5in; height:8.5in; }
 .pg-full{ width:8.5in; height:11in; }
-.page-body{ position:absolute; top:.5in; left:.55in; right:.55in; bottom:.5in; overflow:hidden; }
+.page-body{ position:absolute; top:var(--page-mv,.5in); left:var(--page-mh,.55in); right:var(--page-mh,.55in); bottom:var(--page-mv,.5in); overflow:hidden; }
 .page-foot{ position:absolute; bottom:.24in; left:0; right:0; text-align:center; font-size:8pt; color:var(--muted); }
 .page-blank{ background:#fff; }
 
