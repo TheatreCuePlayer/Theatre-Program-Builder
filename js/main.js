@@ -192,22 +192,22 @@ function renderForm() {
       `<button class="row-add" data-tyreset title="Clear styles for the current scope">Reset</button>`)}
     ${detailsGroup('showinfo', 'Show Info', showInfoBody)}
     ${listBlock('Cast List (no photos)', 'cast', d.cast, [
-      { k: 'character', ph: 'Character' }, { k: 'performer', ph: 'Performer' }])}
+      { k: 'character', ph: 'Character' }, { k: 'performer', ph: 'Performer' }], { reorder: true })}
     ${listBlock('Musical Numbers / Songs', 'songs', d.songs, [
-      { k: 'act', ph: 'Act / group' }, { k: 'title', ph: 'Song / scene title' }, { k: 'note', ph: 'Note (who sings)' }])}
+      { k: 'act', ph: 'Act / group' }, { k: 'title', ph: 'Song / scene title' }, { k: 'note', ph: 'Note (who sings)' }], { reorder: true })}
     ${listBlock("Who's Who (photos + bios · everyone)", 'whoswho', d.whoswho, [
       { k: 'name', ph: 'Name' }, { k: 'credit', ph: 'Role / character' },
       { k: 'photo', ph: 'Photo URL or images/name.jpg', render: (p, v) => imageField(p, v, 'Photo URL, images/name.jpg, or upload →') },
       { k: 'bio', ph: 'Biography', type: 'textarea', rows: 3 }],
       { reorder: true, stacked: true })}
     ${listBlock('Creative Team', 'creative', d.creative, [
-      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }])}
+      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true })}
     ${listBlock('Management', 'management', d.management, [
-      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }])}
+      { k: 'role', ph: 'Role' }, { k: 'name', ph: 'Name' }], { reorder: true })}
     ${listBlock('Production Crew (one category, many names)', 'crew', d.crew, [
       { k: 'category', ph: 'Category (e.g. Scenery Construction)' },
       { k: 'names', ph: 'Names — one per line, or comma-separated', type: 'textarea', rows: 3 }],
-      { stacked: true })}
+      { stacked: true, reorder: true })}
     ${detailsGroup('productionNotes', 'Production Notes',
       field('productionNotes', '', d.productionNotes, 'textarea'))}
     ${detailsGroup('acknowledgments', 'Acknowledgments (back)',
@@ -216,7 +216,7 @@ function renderForm() {
       field('backPage', '', d.backPage, 'textarea'))}
     ${listBlock('QR Codes', 'qr', d.qr, [
       { k: 'label', ph: 'Label (e.g. Donate)' }, { k: 'url', ph: 'Link (https://…)' },
-      { k: 'caption', ph: 'Caption (optional)' }], { stacked: true })}
+      { k: 'caption', ph: 'Caption (optional)' }], { stacked: true, reorder: true })}
     ${customBlock(d.custom)}`;
   initCollapsibles();
   initTypographyPanel();
