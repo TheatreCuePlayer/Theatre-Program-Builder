@@ -145,6 +145,7 @@ function customBlock(items) {
         <label class="fld-inline">Size
           <select data-path="custom.${i}.size" class="fld">
             ${IMG_SIZES.map(s => `<option value="${s}" ${it.size === s ? 'selected' : ''}>${s}</option>`).join('')}
+            <option value="custom" ${it.size === 'custom' ? 'selected' : ''}>custom (drag)</option>
           </select>
         </label>`;
     } else {
@@ -431,6 +432,7 @@ $('#sidebar').addEventListener('click', (e) => {
 
 /* ----------------------------- preview / board ----------------------------- */
 function refreshPreview() {
+  stage.dataset.mode = State.doc.options.layoutMode; // gates in-preview edit handles
   if (State.doc.options.layoutMode === 'manual') {
     previewWrap.classList.add('hidden');
     boardEl.classList.remove('hidden');
@@ -440,7 +442,43 @@ function refreshPreview() {
     previewWrap.classList.remove('hidden');
     paginate(stage, State.doc);
     attachCoverInteractions();
+    attachCustomImageResize();
   }
+}
+
+// Custom-section images: drag the bottom handle to set height (in flow). Screen renders
+// pages at 96px/in, so pixels ÷ 96 = inches. Committed as the item's heightIn.
+function attachCustomImageResize() {
+  stage.querySelectorAll('[data-cimg]').forEach(fig => {
+    const id = fig.dataset.cimg;
+    const img = fig.querySelector('.block-img');
+    const handle = fig.querySelector('.img-resize');
+    if (!img || !handle) return;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const top = img.getBoundingClientRect().top;
+      handle.setPointerCapture(e.pointerId);
+      const move = (ev) => {
+        const hIn = Math.min(Math.max((ev.clientY - top) / 96, 0.5), 10);
+        img.style.height = hIn + 'in';
+      };
+      const up = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        const hIn = Math.round(parseFloat(img.style.height) * 100) / 100;
+        State.update(d => {
+          const it = (d.custom || []).find(c => c.id === id);
+          if (it) { it.heightIn = hIn; it.size = 'custom'; }
+        });
+        // Reflect the new size in the sidebar dropdown without rebuilding the whole form.
+        const idx = (State.doc.custom || []).findIndex(c => c.id === id);
+        const sel = document.querySelector(`select[data-path="custom.${idx}.size"]`);
+        if (sel) sel.value = 'custom';
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+    });
+  });
 }
 
 // Free-layout cover: drag the image box to move, drag the corner dot to resize.

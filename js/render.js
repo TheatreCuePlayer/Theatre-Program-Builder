@@ -48,17 +48,25 @@ const splitNames = (s) => String(s || '').split(/[\n,]+/).map(x => x.trim()).fil
 
 // A block image (custom section). Fixed-height box (via .img-<size> CSS) keeps
 // pagination deterministic; object-fit:contain shows the whole image without cropping.
-function blockImage(url) {
-  if (!url) return `<div class="block-img photo-empty"><span>image</span></div>`;
-  return `<img class="block-img" src="${attr(url)}" loading="eager" alt="">`;
+// A custom-section image figure. Size is a preset (img-<size>) unless the user drag-sized
+// it, in which case size==='custom' and heightIn (inches) is applied inline. The resize
+// handle is present but only shown/active in the live auto-preview (see CSS + main.js).
+function customImageFigure(item) {
+  const useCustom = item.size === 'custom' && item.heightIn;
+  const sizeClass = useCustom ? '' : `img-${item.size || 'medium'}`;
+  const style = useCustom ? ` style="height:${item.heightIn}in"` : '';
+  const inner = item.url
+    ? `<img class="block-img"${style} src="${attr(item.url)}" loading="eager" alt=""><span class="img-resize" data-cresize></span>`
+    : `<div class="block-img photo-empty"${style}><span>image</span></div>`;
+  const cap = item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : '';
+  return `<figure class="img-block ${sizeClass}" data-cimg="${attr(item.id)}"><div class="block-img-wrap">${inner}</div>${cap}</figure>`;
 }
 
 // HTML for a user-added custom section (image or text box).
 function customInnerHTML(item) {
   if (item.type === 'image') {
     const head = item.heading ? sectionHead(item.heading) : '';
-    const cap = item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : '';
-    return head + `<figure class="img-block img-${item.size || 'medium'}">${blockImage(item.url)}${cap}</figure>`;
+    return head + customImageFigure(item);
   }
   const h = item.heading || '';
   return (h ? sectionHead(h) : '') + `<div class="prose">${nl2br(item.body)}</div>`;
@@ -248,8 +256,7 @@ function buildBlocks(doc) {
   (doc.custom || []).filter(customHasContent).forEach(item => {
     if (item.type === 'image') {
       if (item.heading) push(item.id, 'inner', true, sectionHead(item.heading));
-      const cap = item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : '';
-      push(item.id, 'inner', false, `<figure class="img-block img-${item.size || 'medium'}">${blockImage(item.url)}${cap}</figure>`);
+      push(item.id, 'inner', false, customImageFigure(item));
     } else {
       if (item.heading) push(item.id, 'inner', true, sectionHead(item.heading));
       push(item.id, 'inner', false, `<div class="prose">${nl2br(item.body)}</div>`);
